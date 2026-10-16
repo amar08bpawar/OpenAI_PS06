@@ -2,8 +2,8 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 
 /**
- * Server-only Supabase admin client.
- * Never import into client components.
+ * Server-only Supabase client with admin (service role) privileges.
+ * NEVER import this file into client components or expose SUPABASE_SERVICE_ROLE_KEY to the browser.
  */
 export function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -17,14 +17,17 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-muted-foreground">
-          <Link href="/#features" className="hover:text-foreground transition-colors">
-            Platform Features
+          <Link href="/jobs" className="hover:text-foreground transition-colors">
+            Jobs
+          </Link>
+          <Link href="/internships" className="hover:text-foreground transition-colors">
+            Internships
+          </Link>
+          <Link href="/companies" className="hover:text-foreground transition-colors">
+            Companies
           </Link>
           <Link href="/#roles" className="hover:text-foreground transition-colors">
-            Roles & Access
-          </Link>
-          <Link href="/#security" className="hover:text-foreground transition-colors">
-            Security & RLS
+            Roles & RLS
           </Link>
         </nav>
 

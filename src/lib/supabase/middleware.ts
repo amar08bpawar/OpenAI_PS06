@@ -67,7 +67,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protected paths requiring active authentication
-  const isProtectedRoute = pathname.startsWith("/dashboard");
+  const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/recruiter");
   const isAuthRoute = pathname.startsWith("/auth/login") || pathname.startsWith("/auth/register");
 
   if (isProtectedRoute && !user) {

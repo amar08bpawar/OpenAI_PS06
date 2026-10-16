@@ -8,8 +8,10 @@ import {
   X,
   LayoutDashboard,
   UserCheck,
-  GraduationCap,
+  Briefcase,
   Sparkles,
+  Building2,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,9 +23,29 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    name: "Profile & Academic Info",
+    name: "Academic Profile",
     href: "/dashboard/profile",
     icon: UserCheck,
+  },
+  {
+    name: "My Applications",
+    href: "/dashboard/applications",
+    icon: FileCheck,
+  },
+  {
+    name: "Placement Jobs",
+    href: "/jobs",
+    icon: Briefcase,
+  },
+  {
+    name: "Internships",
+    href: "/internships",
+    icon: Sparkles,
+  },
+  {
+    name: "Companies",
+    href: "/companies",
+    icon: Building2,
   },
 ];
 

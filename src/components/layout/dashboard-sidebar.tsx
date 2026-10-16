@@ -6,9 +6,10 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   UserCheck,
-  GraduationCap,
+  Briefcase,
   Sparkles,
-  Award,
+  Building2,
+  FileCheck,
   ChevronRight,
   ShieldCheck,
 } from "lucide-react";
@@ -22,9 +23,29 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    name: "Profile & Academic Info",
+    name: "Academic Profile",
     href: "/dashboard/profile",
     icon: UserCheck,
+  },
+  {
+    name: "My Applications",
+    href: "/dashboard/applications",
+    icon: FileCheck,
+  },
+  {
+    name: "Placement Jobs",
+    href: "/jobs",
+    icon: Briefcase,
+  },
+  {
+    name: "Internships",
+    href: "/internships",
+    icon: Sparkles,
+  },
+  {
+    name: "Company Directory",
+    href: "/companies",
+    icon: Building2,
   },
 ];
 
