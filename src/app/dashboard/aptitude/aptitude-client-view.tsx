@@ -135,37 +135,6 @@ export function AptitudeClientView({ initialAttempts }: Props) {
     }
   };
 
-  // Timer countdown
-  useEffect(() => {
-    if (viewMode !== "exam") return;
-
-    timerRef.current = setInterval(() => {
-      setSecondsRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          // Auto submit when time runs out
-          handleFinalSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [viewMode]);
-
-  // Answer selection
-  const handleSelectOption = (optionIndex: number) => {
-    const q = questions[currentIndex];
-    if (!q) return;
-    setUserAnswers((prev) => ({
-      ...prev,
-      [q.id]: optionIndex,
-    }));
-  };
-
   // Submit test
   const handleFinalSubmit = async () => {
     if (!activeTest || submitting) return;
@@ -206,13 +175,47 @@ export function AptitudeClientView({ initialAttempts }: Props) {
         };
         setAttempts((prev) => [newAttemptItem, ...prev]);
       } else {
-        setError(res.error || "Grading submission failed.");
+        setError(res.error || "Failed to submit assessment.");
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to grade answers.");
+      setError(err?.message || "An unexpected error occurred during submission.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleFinalSubmitRef = useRef(handleFinalSubmit);
+  handleFinalSubmitRef.current = handleFinalSubmit;
+
+  // Timer countdown
+  useEffect(() => {
+    if (viewMode !== "exam") return;
+
+    timerRef.current = setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          // Auto submit when time runs out
+          handleFinalSubmitRef.current();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [viewMode]);
+
+  // Answer selection
+  const handleSelectOption = (optionIndex: number) => {
+    const q = questions[currentIndex];
+    if (!q) return;
+    setUserAnswers((prev) => ({
+      ...prev,
+      [q.id]: optionIndex,
+    }));
   };
 
   const formatTimer = (totalSeconds: number) => {

@@ -181,6 +181,7 @@ export function GitHubClientView({ savedEvidence }: Props) {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   {evidence.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={evidence.avatar_url}
                       alt={evidence.username}
