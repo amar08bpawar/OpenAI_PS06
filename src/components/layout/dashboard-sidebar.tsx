@@ -10,6 +10,7 @@ import {
   Sparkles,
   Building2,
   FileCheck,
+  FileText,
   ChevronRight,
   ShieldCheck,
   Brain,
@@ -30,6 +31,11 @@ const navigationItems = [
     name: "Academic Profile",
     href: "/dashboard/profile",
     icon: UserCheck,
+  },
+  {
+    name: "Resume Builder",
+    href: "/dashboard/resume",
+    icon: FileText,
   },
   {
     name: "My Applications",

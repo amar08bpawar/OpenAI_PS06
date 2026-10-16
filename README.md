@@ -68,16 +68,40 @@ Placement Hub is a student-focused placement preparation platform built with **N
   - Flags insufficient profile information explicitly when data is missing.
   - Generates structured learning plans with curated resources and chronological preparation milestones.
 
+### Phase 4: Interactive Resume Builder & Printable Templates
+- **Interactive Multi-Section Editor:**
+  - Manages contact details, professional summary, education, marks/CGPA, technical & soft skills, projects, internships, work experience, certifications, and honors.
+  - Form validation with Zod, dynamic entry creation/deletion, and draft persistence.
+  - One-click **"Import Profile"** to pre-populate resume fields from verified academic profile data.
+- **Reusable, Professional Resume Templates:**
+  - **Modern Clean (`modern`):** Sleek accent styling, bulleted lists, and structured skill organization.
+  - **Classic Corporate (`classic`):** Traditional serif typography with horizontal rules preferred by corporate recruitment drives and strict ATS checkers.
+  - **Tech Minimalist (`minimal`):** Monospace technical badges and high information density tailored for software engineering candidates.
+- **Print & PDF Export via `react-to-print`:**
+  - Uses `react-to-print` to isolate the resume canvas for clean printing.
+  - Built-in guidance for downloading as PDF: In the browser print dialog, select Destination -> **"Save as PDF"**.
+  - Custom Print CSS: A4 dimensions (`@page { size: A4; margin: 12mm 14mm; }`), `-webkit-print-color-adjust: exact`, and `break-inside: avoid` preventing awkward page splits across projects or education entries.
+- **Secure AI-Assisted Rewriting:**
+  - AI enhancement for career summaries, project deliverables, and work experience descriptions.
+  - **Strict Non-Hallucination Policy:** OpenAI prompts and fallback logic never fabricate unmentioned degrees, marks, companies, or metrics.
+  - Interactive preview modal allows students to review, edit, or discard suggestions before saving.
+- **Supabase Persistence & RLS Security:**
+  - `resumes` table stores structured JSON drafts with student ownership policies (`student_id = auth.uid()`).
+  - Private storage bucket (`resumes`) with 5MB limits and MIME restrictions.
+- **Responsive Workspace:**
+  - Split-view desktop editor with sticky live preview updating in real time.
+  - Mobile-friendly tab switcher ("Edit Details" vs "Live Preview & Print").
+
 ## Technology Stack
 
 - Next.js App Router
 - React and TypeScript
 - Tailwind CSS
+- `react-to-print`
 - Supabase Authentication & PostgreSQL Database
 - OpenAI SDK (`gpt-4o-mini`)
 - GitHub REST API v3
 - Zod & React Hook Form
-- Supabase PostgreSQL
 - `@supabase/ssr`
 
 ## Prerequisites
