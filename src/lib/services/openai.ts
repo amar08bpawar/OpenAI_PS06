@@ -84,13 +84,26 @@ export async function executeStructuredCompletion<T>(
       isFallback: false,
     };
   } catch (err: any) {
-    // If rate limited or quota exceeded, use fallback if available
-    if (fallbackGenerator && (err?.status === 429 || err?.message?.includes("quota") || err?.code === "insufficient_quota")) {
-      return {
-        success: true,
-        data: fallbackGenerator(),
-        isFallback: true,
-      };
+    // If rate limited, quota exceeded, malformed response, or network timeout: use fallback if available
+    if (fallbackGenerator) {
+      const isRecoverableError =
+        err?.status === 429 ||
+        err?.status === 500 ||
+        err?.status === 503 ||
+        err?.message?.includes("quota") ||
+        err?.code === "insufficient_quota" ||
+        err instanceof SyntaxError ||
+        err instanceof z.ZodError ||
+        err?.name === "APIConnectionTimeoutError" ||
+        err?.code === "ETIMEDOUT";
+
+      if (isRecoverableError) {
+        return {
+          success: true,
+          data: fallbackGenerator(),
+          isFallback: true,
+        };
+      }
     }
 
     const safeMessage = err instanceof z.ZodError
