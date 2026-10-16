@@ -229,6 +229,83 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      {/* Phase 3 AI & Skill Development Tools */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-base font-bold tracking-tight">AI & Skill Development Workspace</h3>
+            <p className="text-xs text-muted-foreground">
+              Aptitude preparation, simulated mock interviews, career guidance, and GitHub evidence.
+            </p>
+          </div>
+          <Badge variant="outline" className="text-[11px] font-mono border-primary/40 text-primary">
+            Phase 3
+          </Badge>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="hover:border-primary transition-all p-4 flex flex-col justify-between">
+            <div>
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 w-fit mb-2">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <h4 className="font-semibold text-sm">Aptitude Tests</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Logical, Quantitative, Technical, and Verbal timed exams with deterministic grading.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="mt-4 w-full">
+              <Link href="/dashboard/aptitude">Launch Test →</Link>
+            </Button>
+          </Card>
+
+          <Card className="hover:border-primary transition-all p-4 flex flex-col justify-between">
+            <div>
+              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 w-fit mb-2">
+                <UserCheck className="h-5 w-5" />
+              </div>
+              <h4 className="font-semibold text-sm">AI Mock Interview</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Realistic HR & technical interview simulation with instant labeled critique.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="mt-4 w-full">
+              <Link href="/dashboard/interview">Practice Interview →</Link>
+            </Button>
+          </Card>
+
+          <Card className="hover:border-primary transition-all p-4 flex flex-col justify-between">
+            <div>
+              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 w-fit mb-2">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <h4 className="font-semibold text-sm">Career Guidance</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Skill-gap analysis, readiness diagnostic, and customized preparation roadmaps.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="mt-4 w-full">
+              <Link href="/dashboard/guidance">Analyze Readiness →</Link>
+            </Button>
+          </Card>
+
+          <Card className="hover:border-primary transition-all p-4 flex flex-col justify-between">
+            <div>
+              <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 w-fit mb-2">
+                <GraduationCap className="h-5 w-5" />
+              </div>
+              <h4 className="font-semibold text-sm">GitHub Skill Signals</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Extract open-source repository footprints and language distributions.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="mt-4 w-full">
+              <Link href="/dashboard/github">Inspect Profile →</Link>
+            </Button>
+          </Card>
+        </div>
+      </div>
+
       {/* Content Grid */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Academic Profile Summary Card */}

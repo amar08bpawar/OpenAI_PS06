@@ -154,6 +154,127 @@ export interface Application {
   student_details?: StudentDetails;
 }
 
+export type AptitudeCategory =
+  | "logical"
+  | "quantitative"
+  | "mathematics"
+  | "verbal"
+  | "problem_solving"
+  | "technical";
+
+export type AptitudeDifficulty = "beginner" | "intermediate" | "advanced";
+
+export interface AptitudeTest {
+  id: string;
+  title: string;
+  category: AptitudeCategory;
+  difficulty: AptitudeDifficulty;
+  description?: string | null;
+  time_limit_minutes: number;
+  total_questions: number;
+  is_generated: boolean;
+  created_at: string;
+}
+
+export interface AptitudeQuestion {
+  id: string;
+  test_id: string;
+  question_text: string;
+  options: string[];
+  correct_option: number; // 0 to 3, server-side only
+  explanation: string;
+  order_index: number;
+  created_at: string;
+}
+
+export interface PublicAptitudeQuestion {
+  id: string;
+  test_id: string;
+  question_text: string;
+  options: string[];
+  order_index: number;
+}
+
+export interface AptitudeAttempt {
+  id: string;
+  student_id: string;
+  test_id: string;
+  score: number;
+  total_questions: number;
+  correct_count: number;
+  time_spent_seconds: number;
+  user_answers: Record<string, number>;
+  passed: boolean;
+  created_at: string;
+  test?: AptitudeTest;
+}
+
+export type InterviewCategory =
+  | "hr"
+  | "technical"
+  | "communication"
+  | "teamwork"
+  | "mock";
+
+export interface InterviewMessage {
+  role: "assistant" | "user";
+  content: string;
+  timestamp: string;
+  feedback?: string | null;
+}
+
+export interface InterviewSession {
+  id: string;
+  student_id: string;
+  category: InterviewCategory;
+  role_target: string;
+  messages: InterviewMessage[];
+  overall_feedback?: string | null;
+  status: "active" | "completed";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CareerGuidanceAnalysis {
+  skills_matched: string[];
+  skills_gap: string[];
+  readiness_score: number; // 0 - 100
+  recommended_learning_plan: {
+    skill: string;
+    action: string;
+    resources: string[];
+  }[];
+  milestones: string[];
+  advice: string;
+  is_data_sufficient: boolean;
+  insufficient_reason?: string | null;
+}
+
+export interface CareerGuidanceReport {
+  id: string;
+  student_id: string;
+  target_role: string;
+  analysis: CareerGuidanceAnalysis;
+  created_at: string;
+}
+
+export interface StudentGitHubEvidence {
+  student_id: string;
+  username: string;
+  public_repos_count: number;
+  total_stars: number;
+  languages: Record<string, { bytes: number; percentage: number }>;
+  top_repos: {
+    name: string;
+    description: string | null;
+    html_url: string;
+    stars: number;
+    forks: number;
+    primary_language: string | null;
+  }[];
+  last_fetched_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -197,6 +318,42 @@ export interface Database {
         Row: Application;
         Insert: Partial<Application>;
         Update: Partial<Application>;
+        Relationships: [];
+      };
+      aptitude_tests: {
+        Row: AptitudeTest;
+        Insert: Partial<AptitudeTest>;
+        Update: Partial<AptitudeTest>;
+        Relationships: [];
+      };
+      aptitude_questions: {
+        Row: AptitudeQuestion;
+        Insert: Partial<AptitudeQuestion>;
+        Update: Partial<AptitudeQuestion>;
+        Relationships: [];
+      };
+      aptitude_attempts: {
+        Row: AptitudeAttempt;
+        Insert: Partial<AptitudeAttempt>;
+        Update: Partial<AptitudeAttempt>;
+        Relationships: [];
+      };
+      interview_sessions: {
+        Row: InterviewSession;
+        Insert: Partial<InterviewSession>;
+        Update: Partial<InterviewSession>;
+        Relationships: [];
+      };
+      career_guidance_reports: {
+        Row: CareerGuidanceReport;
+        Insert: Partial<CareerGuidanceReport>;
+        Update: Partial<CareerGuidanceReport>;
+        Relationships: [];
+      };
+      student_github_evidence: {
+        Row: StudentGitHubEvidence;
+        Insert: Partial<StudentGitHubEvidence>;
+        Update: Partial<StudentGitHubEvidence>;
         Relationships: [];
       };
     };

@@ -12,6 +12,10 @@ import {
   Sparkles,
   Building2,
   FileCheck,
+  Brain,
+  Bot,
+  Compass,
+  Code2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +35,26 @@ const navigationItems = [
     name: "My Applications",
     href: "/dashboard/applications",
     icon: FileCheck,
+  },
+  {
+    name: "Aptitude Tests",
+    href: "/dashboard/aptitude",
+    icon: Brain,
+  },
+  {
+    name: "AI Mock Interview",
+    href: "/dashboard/interview",
+    icon: Bot,
+  },
+  {
+    name: "Career Guidance",
+    href: "/dashboard/guidance",
+    icon: Compass,
+  },
+  {
+    name: "GitHub Skill Signals",
+    href: "/dashboard/github",
+    icon: Code2,
   },
   {
     name: "Placement Jobs",

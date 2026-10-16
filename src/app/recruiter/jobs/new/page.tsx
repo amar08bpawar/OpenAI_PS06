@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createClient } from "@/lib/supabase/client";
 import { createJobAction, createInternshipAction } from "@/app/actions/listings";
+import { JobParserDialog } from "@/components/placement/job-parser-dialog";
+import type { JobParserOutput } from "@/lib/services/job-parser";
 import type { Company, WorkMode } from "@/types/database";
 
 export default function NewOpportunityPage() {
@@ -152,6 +154,31 @@ export default function NewOpportunityPage() {
     }
   };
 
+  const handleApplyParsedData = (data: JobParserOutput) => {
+    if (data.title) setTitle(data.title);
+    if (data.summary) {
+      const resp = data.responsibilities && data.responsibilities.length > 0
+        ? `\n\nKey Responsibilities:\n- ${data.responsibilities.join("\n- ")}`
+        : "";
+      setDescription(`${data.summary}${resp}`);
+    }
+    if (data.work_mode) setWorkMode(data.work_mode);
+    if (data.required_skills && data.required_skills.length > 0) {
+      setRequiredSkills(data.required_skills.join(", "));
+    }
+    if (data.min_cgpa !== null && data.min_cgpa !== undefined) {
+      setMinCgpa(data.min_cgpa.toString());
+    }
+    if (data.eligible_qualifications && data.eligible_qualifications.length > 0) {
+      setEligibleQualifications(data.eligible_qualifications.join(", "));
+    }
+    if (data.eligible_graduation_years && data.eligible_graduation_years.length > 0) {
+      setEligibleGraduationYears(data.eligible_graduation_years.join(", "));
+    }
+    if (data.location) setLocation(data.location);
+    if (data.salary_range) setCompensation(data.salary_range);
+  };
+
   return (
     <div className="container max-w-3xl mx-auto py-10 space-y-6">
       <Button variant="ghost" size="sm" asChild>
@@ -161,7 +188,7 @@ export default function NewOpportunityPage() {
         </Link>
       </Button>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Create Opportunity Posting</h1>
           <p className="text-sm text-muted-foreground">
@@ -169,30 +196,34 @@ export default function NewOpportunityPage() {
           </p>
         </div>
 
-        {/* Opportunity type switcher */}
-        <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
-          <button
-            type="button"
-            onClick={() => setOpportunityType("job")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              opportunityType === "job"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Full-Time Job
-          </button>
-          <button
-            type="button"
-            onClick={() => setOpportunityType("internship")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              opportunityType === "internship"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Internship
-          </button>
+        <div className="flex items-center gap-3">
+          <JobParserDialog onApply={handleApplyParsedData} />
+
+          {/* Opportunity type switcher */}
+          <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setOpportunityType("job")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                opportunityType === "job"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Full-Time Job
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpportunityType("internship")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                opportunityType === "internship"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Internship
+            </button>
+          </div>
         </div>
       </div>
 
