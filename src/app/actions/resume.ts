@@ -277,3 +277,56 @@ export async function rewriteResumeContentAction(params: {
 
   return rewriteResumeContent(params.section, params.originalText, params.context);
 }
+
+/**
+ * Uploads a student resume PDF to private Supabase storage.
+ * Enforces authenticated session, PDF mime type, and 5MB limit.
+ */
+export async function uploadResumeFileAction(formData: FormData): Promise<{
+  success: boolean;
+  filePath?: string;
+  error?: string;
+}> {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    return { success: false, error: "Authentication required to upload resume." };
+  }
+
+  const file = formData.get("file") as File | null;
+  if (!file) {
+    return { success: false, error: "No file provided." };
+  }
+
+  if (file.type !== "application/pdf") {
+    return { success: false, error: "Only PDF documents (.pdf) are permitted." };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: "File exceeds 5MB size limit." };
+  }
+
+  const filePath = `${user.id}/${Date.now()}-resume.pdf`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("resumes")
+    .upload(filePath, file, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+
+  if (uploadError) {
+    return { success: false, error: uploadError.message };
+  }
+
+  // Update student_details.resume_url if profile exists
+  await supabase
+    .from("student_details")
+    .update({ resume_url: filePath, updated_at: new Date().toISOString() })
+    .eq("user_id", user.id);
+
+  return { success: true, filePath };
+}
+

@@ -71,6 +71,43 @@ BEGIN
         ARRAY['application/pdf']::text[]
     )
     ON CONFLICT (id) DO NOTHING;
+
+    -- Storage RLS policies for private 'resumes' bucket
+    CREATE POLICY "Students upload own resume files"
+        ON storage.objects
+        FOR INSERT
+        TO authenticated
+        WITH CHECK (
+            bucket_id = 'resumes' AND
+            (storage.foldername(name))[1] = auth.uid()::text
+        );
+
+    CREATE POLICY "Students read own resume files"
+        ON storage.objects
+        FOR SELECT
+        TO authenticated
+        USING (
+            bucket_id = 'resumes' AND
+            ((storage.foldername(name))[1] = auth.uid()::text OR public.is_admin())
+        );
+
+    CREATE POLICY "Students modify own resume files"
+        ON storage.objects
+        FOR UPDATE
+        TO authenticated
+        USING (
+            bucket_id = 'resumes' AND
+            (storage.foldername(name))[1] = auth.uid()::text
+        );
+
+    CREATE POLICY "Students delete own resume files"
+        ON storage.objects
+        FOR DELETE
+        TO authenticated
+        USING (
+            bucket_id = 'resumes' AND
+            (storage.foldername(name))[1] = auth.uid()::text
+        );
 EXCEPTION
     WHEN OTHERS THEN
         NULL; -- Gracefully proceed if storage schema is mocked or managed externally
