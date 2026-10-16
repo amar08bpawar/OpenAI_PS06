@@ -82,6 +82,20 @@ export function ProfileMenu({ profile }: ProfileMenuProps) {
             <span>Profile & Qualifications</span>
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/applications" className="flex items-center cursor-pointer">
+            <GraduationCap className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>My Applications</span>
+          </Link>
+        </DropdownMenuItem>
+        {(roleLabel === "recruiter" || roleLabel === "administrator") && (
+          <DropdownMenuItem asChild>
+            <Link href="/recruiter/jobs" className="flex items-center cursor-pointer font-medium text-primary">
+              <Building2 className="mr-2 h-4 w-4 text-primary" />
+              <span>Recruiter Workspace</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}

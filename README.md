@@ -2,25 +2,81 @@
 
 Placement Hub is a student-focused placement preparation platform built with **Next.js, TypeScript, Tailwind CSS, and Supabase**.
 
-**Current phase:** Phase 1 — Authentication and Supabase Setup
+**Current phase:** Phase 3 — AI & Skill Development Features Complete (Authentication + Placement Core + OpenAI & GitHub Skills)
 
 ## Features
 
-- Student registration and login
-- Email OTP and confirmation flow
-- Forgot-password and password-reset pages
-- Authentication callback handling
-- Protected dashboard and profile pages
-- Supabase client, server, and middleware integration
-- Database schema and migration files
-- Authentication validation tests
+### Phase 1: Authentication & Foundation
+- Student registration, email verification (OTP / Confirmation), login, and logout.
+- Password recovery and reset flow.
+- Session persistence and route middleware protection.
+- Role management: `student`, `recruiter`, `administrator`.
+- Separation of client, server, and service-role database clients.
+
+### Phase 2: Core Placement Management System
+- **Comprehensive Student Profiles:**
+  - Academic & personal details: college, qualification, course, graduation year, CGPA, phone, LinkedIn.
+  - Technical and soft skills tag management.
+  - Dynamic interactive projects and experience lists.
+  - Real-time profile completeness indicator.
+- **Company Management:**
+  - Company directory with search and industry filtering.
+  - Company profile details displaying active jobs and internships.
+  - Recruiter company registration and association.
+- **Job & Internship Management:**
+  - Full-time jobs and internships catalogs with multi-parameter search, work-mode filter, and sorting.
+  - Detailed listing view with requirements, selection process, and application deadlines.
+  - Recruiter workspace for creating, editing, and closing listings.
+- **Deterministic Eligibility Engine:**
+  - Evaluates CGPA, qualification match, graduation batch, required technical skills, and deadline.
+  - Clear Eligible vs. Not Eligible determination with transparent criteria breakdown.
+  - Missing student data is strictly treated as unknown / unmet — zero AI guessing.
+- **Application Tracking & Candidate Pipeline:**
+  - 1-click application submission with duplicate prevention enforced by database unique constraints.
+  - Student application tracking with live status and self-withdrawal option.
+  - Recruiter candidate management dashboard with student qualifications breakdown and server-validated status transitions (`Applied` → `Shortlisted` → `Interview` → `Selected`, `Rejected`, `Withdrawn`).
+  - Strict Row Level Security (RLS) ensuring students see only their own applications and recruiters see only candidates for their listings.
+
+### Phase 3: AI & Skill Development Features
+- **Server-Side OpenAI Integration:**
+  - Utilizes official OpenAI SDK (`openai`) strictly from server-side code.
+  - Safe key isolation: `OPENAI_API_KEY` is loaded from server environment variables only and never exposed to the frontend or browser logs.
+  - Structured response parsing and Zod schema validation with timeouts and safe heuristic fallbacks.
+- **AI Job Description Parser:**
+  - Accepts unstructured job descriptions and extracts normalized technical skills, qualifications, experience requirements, and responsibilities.
+  - Returns structured JSON validated via Zod.
+  - Mandatory recruiter review step before applying extracted parameters to job forms.
+  - Strict non-hallucination guard: absent eligibility criteria are not invented.
+- **GitHub Public Skill Evidence:**
+  - Inspects public GitHub metadata via the official GitHub REST API (`/users/{username}`, `/repos`, and `/languages`).
+  - Aggregates language byte counts, percentage distributions, total stars, and top source repositories.
+  - Handles pagination, invalid handles, and API rate limits gracefully without accessing private repositories.
+  - Enforces transparent disclaimer labeling: repository data reflects public activity signals and does *not* constitute proof of proficiency.
+- **Placement Aptitude Assessments:**
+  - Timed practice exams across 6 categories: Logical Reasoning, Quantitative Aptitude, Applied Mathematics, Verbal Ability, Problem Solving, and Core Technical Concepts.
+  - Configurable question counts (5, 10, 15) and difficulty tiers (Beginner, Intermediate, Advanced).
+  - **Zero Answer Leakage:** Answer keys and explanations are held strictly on the server and stripped from questions sent to the client.
+  - **Deterministic Backend Grading:** Scores are computed on the server, passing benchmarks are enforced (>= 60%), and step-by-step explanations are revealed only after submission.
+  - Attempt history tracking with student ownership and RLS protection.
+- **AI Mock Interview Simulator:**
+  - Interactive simulation supporting HR/Behavioral, Technical, Communication, Teamwork, and Full Mock placement rounds.
+  - Conversation context safety with strict input limits (max 2,000 characters) and token bounds.
+  - Generates realistic follow-up questions accompanied by clear, constructive AI-generated feedback and performance ratings.
+- **AI Career Guidance & Skill-Gap Analysis:**
+  - Benchmarks student profile against target placement roles (Full Stack, Frontend, Backend, Software Engineer, Data Analyst, Cloud/DevOps, ML).
+  - Computes placement readiness diagnostic score (0-100%) and identifies matched vs. gap skills.
+  - Flags insufficient profile information explicitly when data is missing.
+  - Generates structured learning plans with curated resources and chronological preparation milestones.
 
 ## Technology Stack
 
 - Next.js App Router
 - React and TypeScript
 - Tailwind CSS
-- Supabase Authentication
+- Supabase Authentication & PostgreSQL Database
+- OpenAI SDK (`gpt-4o-mini`)
+- GitHub REST API v3
+- Zod & React Hook Form
 - Supabase PostgreSQL
 - `@supabase/ssr`
 
@@ -76,20 +132,39 @@ Review the SQL before applying it.
 
 Available schema files:
 
-- `supabase/migrations/20261016000000_create_auth_and_profiles_schema.sql`
-- `supabase/schema.sql`
+- `supabase/migrations/20261016000000_create_auth_and_profiles_schema.sql` (Phase 1 Auth & Profiles)
+- `supabase/migrations/20261016100000_core_placement_system.sql` (Phase 2 Core Placement System)
+- `supabase/schema.sql` (Complete unified schema containing Phase 1 + Phase 2)
 
-Open the Supabase SQL Editor and apply the appropriate schema. Check the existing database first; do not run both files blindly if they create the same database objects.
+Open the Supabase SQL Editor and apply `supabase/schema.sql` (or apply the migrations sequentially).
 
-The schema files are intended to support:
+Available schema files:
 
-- `public.profiles`
-- `public.student_details`
-- `public.recruiter_memberships`
-- Row Level Security (RLS) policies
-- Supporting database triggers
+- `supabase/migrations/20261016000000_create_auth_and_profiles_schema.sql` (Phase 1 Auth & Profiles)
+- `supabase/migrations/20261016100000_core_placement_system.sql` (Phase 2 Core Placement System)
+- `supabase/migrations/20261016200000_ai_and_skill_development.sql` (Phase 3 AI & Skill Development)
+- `supabase/schema.sql` (Complete unified schema containing Phases 1, 2, and 3)
 
-Review and test the security policies before using real user data.
+Open the Supabase SQL Editor and apply `supabase/schema.sql` (or apply the migrations sequentially).
+
+The schema supports:
+
+- **Tables:** `profiles`, `student_details`, `recruiter_memberships`, `companies`, `jobs`, `internships`, `applications`, `aptitude_tests`, `aptitude_questions`, `aptitude_attempts`, `interview_sessions`, `career_guidance_reports`, `student_github_evidence`.
+- **Integrity Constraints:**
+  - `uq_student_job_application` (`UNIQUE(student_id, job_id)`)
+  - `uq_student_internship_application` (`UNIQUE(student_id, internship_id)`)
+  - Application status enum constraint (`Applied`, `Shortlisted`, `Interview`, `Selected`, `Rejected`, `Withdrawn`)
+  - Aptitude category & difficulty checks
+  - Interview category & status checks
+- **Row Level Security (RLS) policies:**
+  - Profiles & details: Students view & edit only permitted profile fields; tampering with roles is blocked by triggers.
+  - Companies: Verified companies visible to authenticated users; recruiters manage their own companies.
+  - Jobs & Internships: Public/students view published and approved postings; recruiters manage their own listings.
+  - Applications: Students view and withdraw only their own applications; recruiters view and advance applicants for their listings.
+  - Aptitude Tests & Questions: Tests and questions readable; question correct answers remain server-side during test delivery.
+  - Attempts & Sessions: Students view, insert, and update only their own test attempts, mock interviews, and career guidance reports.
+  - GitHub Evidence: Students manage their own evidence; authorized recruiters can inspect applicant evidence.
+- **Triggers:** `handle_updated_at` timestamps, `on_auth_user_created` profile sync, `prevent_role_tampering`.
 
 ### 5. Start the Development Server
 
@@ -108,27 +183,68 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Available Commands
 
 ```bash
-npm install
-npm run dev
-npm test
-npm run build
+npm install        # Install project dependencies
+npm run dev        # Launch Next.js development server
+npm test           # Run Phase 1, Phase 2, and Phase 3 automated test suites
+npm run build      # Perform production build & static optimization
+npm run lint       # Run Next.js ESLint checks
 ```
 
-Check `package.json` for the scripts available in your project.
+## Testing Checklists
 
-## Authentication Testing Checklist
+### Automated Test Suites
+Run the offline unit & integration test suites:
+```bash
+npm test
+```
+This runs:
+1. `tests/auth-validation.test.mjs`: Tests environment security, secret protection, auth Zod schemas, session middleware, and role constraints.
+2. `tests/placement-system.test.mjs`: Tests rule-based eligibility evaluation (strict handling of missing data, zero AI guessing), application state machine transitions, duplicate application prevention (PostgreSQL error `23505`), RLS policy definitions, and profile completeness calculation.
+3. `tests/phase3-ai-skills.test.mjs`: Tests OpenAI SDK server-only key security, AI Job Description Parser Zod validation (non-hallucination of absent criteria), GitHub REST API rate limits and disclaimer notice, aptitude test question sanitization (answer keys stripped before client delivery), deterministic backend answer grading, interview conversation limits (2000 chars), and career guidance insufficient data handling.
 
-Use a test account and your own Supabase project.
+### Phase 1: Authentication Testing Checklist
+*(Requires configured Supabase credentials)*
+1. **Registration:** Open `/auth/register` and submit student details.
+2. **Email verification:** Complete OTP or confirmation at `/auth/verify-otp`.
+3. **Login & Session:** Sign in via `/auth/login`; verify session persistence on page refresh.
+4. **Password recovery:** Test `/auth/forgot-password` and `/auth/reset-password`.
+5. **Route protection:** Verify unauthenticated access to `/dashboard` or `/recruiter` redirects to login.
 
-1. **Registration:** Open `/auth/register` and submit the required details.
-2. **Email verification:** Complete the OTP or confirmation process at `/auth/verify-otp`, as implemented.
-3. **Login:** Sign in through `/auth/login`.
-4. **Protected routes:** Test `/dashboard` and `/dashboard/profile` while signed in and signed out.
-5. **Password recovery:** Test `/auth/forgot-password` and `/auth/reset-password`.
-6. **Session persistence:** Refresh the browser and verify that the session behaves correctly.
-7. **Security:** Verify that users cannot access or modify other users' private records.
+### Phase 2: Placement System Testing Checklist
+*(Requires configured Supabase credentials and applied migrations)*
+1. **Student Profile:** Navigate to `/dashboard/profile` and test real-time completeness progress score.
+2. **Directory & Listings:** Browse `/companies`, `/jobs`, and `/internships` with search, work-mode filter, and sorting.
+3. **Deterministic Eligibility Engine:** Verify that opening job/internship details displays "Eligible" or "Not Eligible" with the exact unmet reasons.
+4. **Application Submission:** Apply for a position and confirm duplicate applications are blocked at both UI and database layers.
+5. **Application Status Tracking:** Track and withdraw applications at `/dashboard/applications`.
+6. **Recruiter Workflow:** Manage listings and advance candidates through pipeline stages at `/recruiter/jobs/[id]/applications`.
 
-Successful compilation does not guarantee that live authentication works. Test each flow against your configured Supabase project.
+### Phase 3: AI & Skill Development Testing Checklist
+*(Offline fallback mode works out of the box; live mode uses OPENAI_API_KEY)*
+1. **GitHub Public Skill Signals:**
+   - Navigate to `/dashboard/github`.
+   - Enter a public GitHub username (e.g. `torvalds`) and click "Extract Signals".
+   - Confirm public repository count, stars, language distribution bar, and prominent non-proficiency disclaimer.
+   - Click "Save Evidence to Profile" to verify persistence into `student_github_evidence`.
+2. **Placement Aptitude Assessments:**
+   - Navigate to `/dashboard/aptitude`.
+   - Select a domain (e.g., Logical, Technical, Quantitative), difficulty (Beginner/Intermediate/Advanced), and question count (5, 10, 15).
+   - Launch the assessment: verify the live countdown timer and that answer keys are not inspectable in network payloads.
+   - Select answers and click "Submit Test": verify deterministic scoring, pass/fail threshold (60%), step-by-step explanations, and logging in attempt history.
+3. **AI Mock Interview Simulator:**
+   - Navigate to `/dashboard/interview`.
+   - Start an HR or Technical round targeting a specific role (e.g. "Frontend Engineer").
+   - Respond to the interviewer's prompt: verify character counter (max 2,000 characters) and review the constructive, labeled `[AI-GENERATED FEEDBACK]` and performance rating.
+4. **AI Career Guidance & Gap Analysis:**
+   - Navigate to `/dashboard/guidance`.
+   - Select a target career pathway (e.g., "Full Stack Developer", "Data Analyst").
+   - Click "Analyze Readiness & Generate Roadmap": verify readiness diagnostic score, skills matched vs. skills gap, targeted learning plan, and milestone timeline.
+   - If profile lacks recorded skills, verify the system explicitly explains data insufficiency and prompts the student to update their profile.
+5. **AI Job Description Parser (Recruiter):**
+   - Navigate to `/recruiter/jobs/new`.
+   - Click "Auto-Fill via AI Parser" and paste raw job description text.
+   - Click "Extract Structured Criteria" and review extracted title, skills, CGPA, qualifications, and responsibilities.
+   - Verify that unmentioned criteria remain empty/null without hallucination, and click "Apply Extracted Data to Form" to populate the job opening form.
 
 ## Project Structure
 
@@ -136,20 +252,34 @@ Successful compilation does not guarantee that live authentication works. Test e
 placement hub/
 ├── src/
 │   ├── app/
-│   │   ├── auth/
-│   │   └── dashboard/
+│   │   ├── actions/          # Server actions: listings, applications, aptitude, interview, guidance, github, parser
+│   │   ├── auth/             # Login, register, OTP verification, password reset
+│   │   ├── companies/        # Company directory and company profile view
+│   │   ├── dashboard/        # Student portal: overview, profile, applications, aptitude, interview, guidance, github
+│   │   ├── internships/      # Internship catalog and detailed view
+│   │   ├── jobs/             # Job catalog and detailed view with eligibility card
+│   │   ├── recruiter/        # Recruiter workspace: job management, applicant pipeline, AI parser dialog
+│   │   └── layout.tsx
 │   ├── components/
+│   │   ├── layout/           # Navbar, mobile navigation, dashboard sidebar, profile menu
+│   │   ├── placement/        # Eligibility card, apply button, job parser dialog
+│   │   └── ui/               # shadcn/ui components (button, card, dialog, badge, alert, etc.)
 │   ├── lib/
-│   ├── middleware.ts
-│   └── types/
+│   │   ├── services/         # Deterministic eligibility engine, OpenAI client, job parser, github, aptitude, interview, career guidance
+│   │   ├── supabase/         # Supabase client, server, admin, and middleware
+│   │   └── validations/      # Zod validation schemas
+│   ├── middleware.ts         # Route protection and session refresh middleware
+│   └── types/                # TypeScript database and application definitions
 ├── supabase/
-│   ├── migrations/
-│   └── schema.sql
+│   ├── migrations/           # Versioned SQL migrations (Phase 1, Phase 2, Phase 3)
+│   └── schema.sql            # Master unified schema
 ├── tests/
+│   ├── auth-validation.test.mjs
+│   ├── placement-system.test.mjs
+│   └── phase3-ai-skills.test.mjs
 ├── .env.example
 ├── .gitignore
 ├── package.json
-├── package-lock.json
 └── README.md
 ```
 

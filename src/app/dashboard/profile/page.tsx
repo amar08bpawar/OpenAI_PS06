@@ -17,6 +17,13 @@ import {
   CheckCircle2,
   ShieldAlert,
   Save,
+  Building,
+  Phone,
+  Linkedin,
+  Briefcase,
+  FolderGit2,
+  HeartHandshake,
+  Check,
 } from "lucide-react";
 
 import { studentProfileSchema, type StudentProfileInput } from "@/lib/validations/auth";
@@ -27,7 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import type { Profile, StudentDetails } from "@/types/database";
+import type { Profile, StudentDetails, ProjectItem, ExperienceItem } from "@/types/database";
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -37,26 +44,68 @@ export default function ProfilePage() {
   const [currentRole, setCurrentRole] = useState<string>("student");
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Dynamic projects & experience lists
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [newProject, setNewProject] = useState<ProjectItem>({
+    title: "",
+    description: "",
+    tech_stack: [],
+    link: "",
+  });
+  const [newProjectTech, setNewProjectTech] = useState("");
+
+  const [experience, setExperience] = useState<ExperienceItem[]>([]);
+  const [newExp, setNewExp] = useState<ExperienceItem>({
+    role: "",
+    company: "",
+    duration: "",
+    description: "",
+  });
+
   const supabase = createClient();
 
   const {
     register,
     handleSubmit,
+    watch,
     reset,
     formState: { errors },
   } = useForm<StudentProfileInput>({
     resolver: zodResolver(studentProfileSchema),
     defaultValues: {
       fullName: "",
+      college: "",
       course: "",
       qualification: "",
       branch: "",
       graduationYear: 2026,
       cgpa: 8.5,
       githubUsername: "",
+      linkedinUrl: "",
+      phone: "",
       skills: "",
+      softSkills: "",
     },
   });
+
+  const watchedValues = watch();
+
+  // Calculate profile completeness
+  const trackedFields = [
+    watchedValues.fullName,
+    watchedValues.college,
+    watchedValues.course,
+    watchedValues.qualification,
+    watchedValues.graduationYear,
+    watchedValues.cgpa,
+    watchedValues.skills,
+    watchedValues.softSkills,
+    watchedValues.githubUsername,
+    projects.length > 0 ? "projects" : "",
+    experience.length > 0 ? "experience" : "",
+  ];
+  const filledCount = trackedFields.filter(Boolean).length;
+  const completionPercentage = Math.round((filledCount / trackedFields.length) * 100);
 
   useEffect(() => {
     async function loadProfile() {
@@ -68,7 +117,6 @@ export default function ProfilePage() {
         if (user) {
           setUserId(user.id);
 
-          // 1. Fetch profile
           const { data: profileData } = await supabase
             .from("profiles")
             .select("*")
@@ -80,7 +128,6 @@ export default function ProfilePage() {
             setCurrentRole(profile.role);
           }
 
-          // 2. Fetch student details
           const { data: detailsData } = await supabase
             .from("student_details")
             .select("*")
@@ -90,14 +137,25 @@ export default function ProfilePage() {
 
           reset({
             fullName: profile?.full_name || (user.user_metadata?.full_name as string) || "",
+            college: details?.college || "",
             course: details?.course || (user.user_metadata?.course as string) || "B.Tech Computer Science",
             qualification: details?.qualification || (user.user_metadata?.qualification as string) || "Undergraduate",
             branch: details?.branch || "",
             graduationYear: details?.graduation_year || 2026,
             cgpa: details?.cgpa ? Number(details.cgpa) : undefined,
             githubUsername: details?.github_username || "",
+            linkedinUrl: details?.linkedin_url || "",
+            phone: details?.phone || "",
             skills: details?.skills ? details.skills.join(", ") : "",
+            softSkills: details?.soft_skills ? details.soft_skills.join(", ") : "",
           });
+
+          if (details?.projects && Array.isArray(details.projects)) {
+            setProjects(details.projects);
+          }
+          if (details?.experience && Array.isArray(details.experience)) {
+            setExperience(details.experience);
+          }
         }
       } catch (err: any) {
         setServerError("Failed to load profile data.");
@@ -108,6 +166,31 @@ export default function ProfilePage() {
 
     loadProfile();
   }, [reset, supabase]);
+
+  const addProject = () => {
+    if (!newProject.title.trim()) return;
+    const techArray = newProjectTech
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    setProjects([...projects, { ...newProject, tech_stack: techArray }]);
+    setNewProject({ title: "", description: "", tech_stack: [], link: "" });
+    setNewProjectTech("");
+  };
+
+  const removeProject = (index: number) => {
+    setProjects(projects.filter((_, i) => i !== index));
+  };
+
+  const addExperience = () => {
+    if (!newExp.role.trim() || !newExp.company.trim()) return;
+    setExperience([...experience, newExp]);
+    setNewExp({ role: "", company: "", duration: "", description: "" });
+  };
+
+  const removeExperience = (index: number) => {
+    setExperience(experience.filter((_, i) => i !== index));
+  };
 
   const onSubmit = async (values: StudentProfileInput) => {
     if (!userId) return;
@@ -129,12 +212,13 @@ export default function ProfilePage() {
         throw new Error(profileError.message);
       }
 
-      // Format skills array
-      const skillsArray = values.skills
-        ? values.skills
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
+      // Format skills arrays
+      const techSkills = values.skills
+        ? values.skills.split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
+
+      const softSkills = values.softSkills
+        ? values.softSkills.split(",").map((s) => s.trim()).filter(Boolean)
         : [];
 
       // 2. Upsert public.student_details
@@ -143,13 +227,19 @@ export default function ProfilePage() {
         .upsert(
           {
             user_id: userId,
+            college: values.college || "",
             course: values.course,
             qualification: values.qualification,
             branch: values.branch || null,
             graduation_year: values.graduationYear || null,
             cgpa: values.cgpa || null,
             github_username: values.githubUsername || null,
-            skills: skillsArray,
+            linkedin_url: values.linkedinUrl || "",
+            phone: values.phone || "",
+            skills: techSkills,
+            soft_skills: softSkills,
+            projects: projects as any,
+            experience: experience as any,
           },
           { onConflict: "user_id" }
         );
@@ -181,9 +271,9 @@ export default function ProfilePage() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Academic Profile</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Academic & Placement Profile</h1>
           <p className="text-sm text-muted-foreground">
-            Manage your personal academic records, qualifications, and GitHub skill handles.
+            Complete your profile to qualify for campus job and internship opportunities.
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -193,6 +283,33 @@ export default function ProfilePage() {
           </Badge>
         </div>
       </div>
+
+      {/* Profile Completion Indicator */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-semibold text-foreground">Profile Completion</span>
+                <Badge variant={completionPercentage >= 80 ? "success" : "info"} className="text-xs">
+                  {completionPercentage}% Complete
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {completionPercentage >= 80
+                  ? "Great job! Your profile meets requirements for automated eligibility checks."
+                  : "Fill in your college, CGPA, technical skills, projects, and soft skills to maximize eligibility."}
+              </p>
+            </div>
+            <div className="w-full sm:w-48 bg-muted rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-primary h-2.5 rounded-full transition-all duration-500"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {serverError && (
@@ -209,15 +326,15 @@ export default function ProfilePage() {
           </Alert>
         )}
 
-        {/* Basic Profile Information */}
+        {/* 1. Identity & Contact Details */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center space-x-2">
               <User className="h-4 w-4 text-primary" />
-              <span>Identity & Personal Details</span>
+              <span>Identity & Contact Details</span>
             </CardTitle>
             <CardDescription>
-              Basic identifying information associated with your placement account
+              Basic personal and contact information for placement communication
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -230,27 +347,56 @@ export default function ProfilePage() {
                   {...register("fullName")}
                 />
                 {errors.fullName && (
-                  <p className="text-xs text-destructive font-medium">
-                    {errors.fullName.message}
-                  </p>
+                  <p className="text-xs text-destructive font-medium">{errors.fullName.message}</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <Label>User Role (Restricted)</Label>
-                <div className="flex items-center justify-between h-10 px-3 rounded-lg border border-border bg-muted/50 text-sm text-muted-foreground cursor-not-allowed">
-                  <span className="capitalize">{currentRole}</span>
-                  <ShieldAlert className="h-4 w-4 text-amber-500" />
+                <Label htmlFor="college">College / University</Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="college"
+                    placeholder="e.g., National Institute of Technology"
+                    className="pl-9"
+                    disabled={isSaving}
+                    {...register("college")}
+                  />
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Role elevation requires trusted administrator approval.
-                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Contact Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    placeholder="+91 9876543210"
+                    className="pl-9"
+                    disabled={isSaving}
+                    {...register("phone")}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="linkedinUrl">LinkedIn Profile URL</Label>
+                <div className="relative">
+                  <Linkedin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="linkedinUrl"
+                    placeholder="https://linkedin.com/in/username"
+                    className="pl-9"
+                    disabled={isSaving}
+                    {...register("linkedinUrl")}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Academic Program & Qualifications */}
+        {/* 2. Academic Curriculum & Marks */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center space-x-2">
@@ -258,7 +404,7 @@ export default function ProfilePage() {
               <span>Academic Curriculum & Scores</span>
             </CardTitle>
             <CardDescription>
-              Degree, specialization branch, graduation timeline, and academic score
+              Degree, specialization branch, graduation year, and CGPA used by eligibility filters
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -272,9 +418,7 @@ export default function ProfilePage() {
                   {...register("course")}
                 />
                 {errors.course && (
-                  <p className="text-xs text-destructive font-medium">
-                    {errors.course.message}
-                  </p>
+                  <p className="text-xs text-destructive font-medium">{errors.course.message}</p>
                 )}
               </div>
 
@@ -282,14 +426,12 @@ export default function ProfilePage() {
                 <Label htmlFor="qualification">Qualification Level</Label>
                 <Input
                   id="qualification"
-                  placeholder="e.g., Undergraduate, Postgraduate"
+                  placeholder="e.g., B.Tech, MCA, Postgraduate"
                   disabled={isSaving}
                   {...register("qualification")}
                 />
                 {errors.qualification && (
-                  <p className="text-xs text-destructive font-medium">
-                    {errors.qualification.message}
-                  </p>
+                  <p className="text-xs text-destructive font-medium">{errors.qualification.message}</p>
                 )}
               </div>
 
@@ -297,7 +439,7 @@ export default function ProfilePage() {
                 <Label htmlFor="branch">Branch / Specialization (Optional)</Label>
                 <Input
                   id="branch"
-                  placeholder="e.g., AI & Data Engineering"
+                  placeholder="e.g., Computer Science & Engineering"
                   disabled={isSaving}
                   {...register("branch")}
                 />
@@ -312,11 +454,6 @@ export default function ProfilePage() {
                   disabled={isSaving}
                   {...register("graduationYear")}
                 />
-                {errors.graduationYear && (
-                  <p className="text-xs text-destructive font-medium">
-                    {errors.graduationYear.message}
-                  </p>
-                )}
               </div>
 
               <div className="space-y-1.5">
@@ -325,32 +462,58 @@ export default function ProfilePage() {
                   id="cgpa"
                   type="number"
                   step="0.01"
-                  placeholder="8.75"
+                  placeholder="8.50"
                   disabled={isSaving}
                   {...register("cgpa")}
                 />
-                {errors.cgpa && (
-                  <p className="text-xs text-destructive font-medium">
-                    {errors.cgpa.message}
-                  </p>
-                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Skill Evidence & GitHub Link */}
+        {/* 3. Technical & Soft Skills */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center space-x-2">
-              <Github className="h-4 w-4 text-primary" />
-              <span>Skill Evidence & Developer Handles</span>
+              <Code2 className="h-4 w-4 text-primary" />
+              <span>Skills & Developer Portfolios</span>
             </CardTitle>
             <CardDescription>
-              Link your public developer portfolio for skill verification
+              Technical proficiencies used for recruiter skill matching and public portfolios
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="skills">Technical Skills (Comma separated)</Label>
+              <div className="relative">
+                <Code2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="skills"
+                  placeholder="React, TypeScript, Next.js, Node.js, PostgreSQL, Python"
+                  className="pl-9"
+                  disabled={isSaving}
+                  {...register("skills")}
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                These skills are directly checked against recruiter required skills.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="softSkills">Soft Skills (Comma separated)</Label>
+              <div className="relative">
+                <HeartHandshake className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="softSkills"
+                  placeholder="Communication, Team Leadership, Problem Solving, Agile"
+                  className="pl-9"
+                  disabled={isSaving}
+                  {...register("softSkills")}
+                />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="githubUsername">Public GitHub Username</Label>
               <div className="relative">
@@ -363,26 +526,159 @@ export default function ProfilePage() {
                   {...register("githubUsername")}
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Allows recruiters to inspect public repository languages and commit signals.
-              </p>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="skills">Self-Reported Technical Skills (Comma separated)</Label>
-              <div className="relative">
-                <Code2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        {/* 4. Projects Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center space-x-2">
+              <FolderGit2 className="h-4 w-4 text-primary" />
+              <span>Academic & Personal Projects</span>
+            </CardTitle>
+            <CardDescription>
+              Highlight significant projects showcasing practical implementation
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {projects.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {projects.map((proj, idx) => (
+                  <div key={idx} className="p-3 border rounded-lg bg-card flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground">{proj.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">{proj.description}</p>
+                      {proj.tech_stack.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {proj.tech_stack.map((t, ti) => (
+                            <Badge key={ti} variant="secondary" className="text-[10px] py-0 px-1.5">
+                              {t}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeProject(idx)}
+                      className="text-xs text-destructive h-7 px-2 hover:bg-destructive/10"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Project Sub-form */}
+            <div className="p-3.5 border border-dashed rounded-lg bg-muted/30 space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Add New Project
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Input
-                  id="skills"
-                  placeholder="React, TypeScript, Node.js, PostgreSQL, Python"
-                  className="pl-9"
-                  disabled={isSaving}
-                  {...register("skills")}
+                  placeholder="Project Title (e.g., Placement Portal)"
+                  value={newProject.title}
+                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                />
+                <Input
+                  placeholder="Tech Stack (comma separated e.g. React, Node.js)"
+                  value={newProjectTech}
+                  onChange={(e) => setNewProjectTech(e.target.value)}
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Enter primary skills separated by commas.
+              <Input
+                placeholder="Short Description of project goals and achievements"
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+              />
+              <div className="flex justify-between items-center">
+                <Input
+                  placeholder="Project / Demo Link (Optional)"
+                  className="max-w-xs"
+                  value={newProject.link || ""}
+                  onChange={(e) => setNewProject({ ...newProject, link: e.target.value })}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={addProject}>
+                  + Add Project
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 5. Experience / Internships Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center space-x-2">
+              <Briefcase className="h-4 w-4 text-primary" />
+              <span>Prior Experience & Internships</span>
+            </CardTitle>
+            <CardDescription>
+              Relevant work, internships, or leadership positions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {experience.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {experience.map((exp, idx) => (
+                  <div key={idx} className="p-3 border rounded-lg bg-card flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground">
+                        {exp.role} <span className="font-normal text-muted-foreground">at {exp.company}</span>
+                      </h4>
+                      <p className="text-xs text-muted-foreground">{exp.duration}</p>
+                      <p className="text-xs mt-1">{exp.description}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeExperience(idx)}
+                      className="text-xs text-destructive h-7 px-2 hover:bg-destructive/10"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Experience Sub-form */}
+            <div className="p-3.5 border border-dashed rounded-lg bg-muted/30 space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Add Work / Internship Experience
               </p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Input
+                  placeholder="Role (e.g. Software Intern)"
+                  value={newExp.role}
+                  onChange={(e) => setNewExp({ ...newExp, role: e.target.value })}
+                />
+                <Input
+                  placeholder="Company / Organization"
+                  value={newExp.company}
+                  onChange={(e) => setNewExp({ ...newExp, company: e.target.value })}
+                />
+                <Input
+                  placeholder="Duration (e.g. May - July 2025)"
+                  value={newExp.duration}
+                  onChange={(e) => setNewExp({ ...newExp, duration: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-between items-center gap-3">
+                <Input
+                  placeholder="Responsibilities, achievements, or technologies used"
+                  value={newExp.description}
+                  onChange={(e) => setNewExp({ ...newExp, description: e.target.value })}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={addExperience} className="shrink-0">
+                  + Add Experience
+                </Button>
+              </div>
             </div>
           </CardContent>
 
@@ -396,7 +692,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  <span>Save Profile Updates</span>
+                  <span>Save Complete Profile</span>
                 </>
               )}
             </Button>

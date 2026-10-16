@@ -85,6 +85,7 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 export const studentProfileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  college: z.string().optional().nullable(),
   course: z.string().min(2, "Course is required"),
   qualification: z.string().min(2, "Qualification is required"),
   branch: z.string().optional().nullable(),
@@ -96,7 +97,12 @@ export const studentProfileSchema = z.object({
     .nullable(),
   cgpa: z.coerce.number().min(0).max(10).optional().nullable(),
   githubUsername: z.string().optional().nullable(),
+  linkedinUrl: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
   skills: z.string().optional(),
+  softSkills: z.string().optional(),
+  projectsJson: z.string().optional(),
+  experienceJson: z.string().optional(),
 });
 
 export type StudentProfileInput = z.infer<typeof studentProfileSchema>;
