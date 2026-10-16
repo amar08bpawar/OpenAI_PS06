@@ -356,6 +356,12 @@ export interface Database {
         Update: Partial<StudentGitHubEvidence>;
         Relationships: [];
       };
+      resumes: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
