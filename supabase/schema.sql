@@ -383,11 +383,11 @@ CREATE POLICY "Admins and recruiters can manage tests"
     USING (public.is_recruiter_or_admin())
     WITH CHECK (public.is_recruiter_or_admin());
 
-CREATE POLICY "Authenticated users can view questions"
+CREATE POLICY "Admins can view questions"
     ON public.aptitude_questions
     FOR SELECT
     TO authenticated
-    USING (true);
+    USING (public.is_admin());
 
 CREATE POLICY "Admins can manage questions"
     ON public.aptitude_questions

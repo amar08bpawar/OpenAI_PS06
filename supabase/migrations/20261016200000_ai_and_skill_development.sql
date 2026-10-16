@@ -122,13 +122,13 @@ CREATE POLICY "Admins and recruiters can manage tests"
     WITH CHECK (public.is_recruiter_or_admin());
 
 -- APTITUDE QUESTIONS POLICIES
--- Questions are queried with server actions to withhold correct answers until grading,
--- but authenticated users can read question structures via server role or RLS.
-CREATE POLICY "Authenticated users can view questions"
+-- Raw questions containing answer keys (correct_option) are only directly viewable
+-- by administrators. Students receive sanitized questions exclusively via server actions.
+CREATE POLICY "Admins can view questions"
     ON public.aptitude_questions
     FOR SELECT
     TO authenticated
-    USING (true);
+    USING (public.is_admin());
 
 CREATE POLICY "Admins can manage questions"
     ON public.aptitude_questions

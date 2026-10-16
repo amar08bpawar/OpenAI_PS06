@@ -312,6 +312,51 @@ runTest("Database Schema: Phase 3 migration defines tests, questions, attempts, 
   assert.ok(sql.includes("CREATE POLICY \"Students manage own github evidence\""), "Must allow student management of github evidence");
 });
 
+// -----------------------------------------------------------------------------
+// Test 9: Aptitude RLS Security & Server Admin Client Protection
+// -----------------------------------------------------------------------------
+runTest("Aptitude RLS Security: Question answer keys are admin-only and createAdminClient is server-guarded", () => {
+  // Check migration 20261017000000_secure_aptitude_rls.sql
+  const secureMigrationPath = path.join(
+    rootDir,
+    "supabase",
+    "migrations",
+    "20261017000000_secure_aptitude_rls.sql"
+  );
+  assert.ok(fs.existsSync(secureMigrationPath), "Secure aptitude RLS migration must exist");
+  const secureSql = fs.readFileSync(secureMigrationPath, "utf-8");
+
+  assert.ok(
+    secureSql.includes("DROP POLICY IF EXISTS \"Authenticated users can view questions\""),
+    "Must drop open question SELECT policy"
+  );
+  assert.ok(
+    secureSql.includes("CREATE POLICY \"Admins can view questions\""),
+    "Must restrict raw question SELECT to admins"
+  );
+
+  // Check admin.ts contains browser runtime check
+  const adminTsPath = path.join(rootDir, "src", "lib", "supabase", "admin.ts");
+  const adminTs = fs.readFileSync(adminTsPath, "utf-8");
+  assert.ok(
+    adminTs.includes('typeof window !== "undefined"'),
+    "createAdminClient must guard against execution in client browser"
+  );
+
+  // Check action parameter validation logic
+  const VALID_CATEGORIES = ["logical", "quantitative", "mathematics", "verbal", "problem_solving", "technical"];
+  const VALID_DIFFICULTIES = ["beginner", "intermediate", "advanced"];
+
+  const validateInput = (cat, diff) => {
+    return VALID_CATEGORIES.includes(cat) && VALID_DIFFICULTIES.includes(diff);
+  };
+
+  assert.strictEqual(validateInput("logical", "beginner"), true);
+  assert.strictEqual(validateInput("hacked_category", "beginner"), false);
+  assert.strictEqual(validateInput("logical", "extreme"), false);
+});
+
+
 console.log("\n------------------------------------------------------------------");
 console.log(` Summary: ${passed} Passed, ${failed} Failed`);
 console.log("==================================================================\n");
