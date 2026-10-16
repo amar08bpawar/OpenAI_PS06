@@ -878,3 +878,57 @@ CREATE POLICY "Students delete own resumes"
     TO authenticated
     USING (student_id = auth.uid());
 
+-- Storage configuration and policies for private 'resumes' bucket
+DO $$
+BEGIN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+        'resumes',
+        'resumes',
+        false,
+        5242880, -- 5 MB limit
+        ARRAY['application/pdf']::text[]
+    )
+    ON CONFLICT (id) DO NOTHING;
+
+    CREATE POLICY "Students upload own resume files"
+        ON storage.objects
+        FOR INSERT
+        TO authenticated
+        WITH CHECK (
+            bucket_id = 'resumes' AND
+            (storage.foldername(name))[1] = auth.uid()::text
+        );
+
+    CREATE POLICY "Students read own resume files"
+        ON storage.objects
+        FOR SELECT
+        TO authenticated
+        USING (
+            bucket_id = 'resumes' AND
+            ((storage.foldername(name))[1] = auth.uid()::text OR public.is_admin())
+        );
+
+    CREATE POLICY "Students modify own resume files"
+        ON storage.objects
+        FOR UPDATE
+        TO authenticated
+        USING (
+            bucket_id = 'resumes' AND
+            (storage.foldername(name))[1] = auth.uid()::text
+        );
+
+    CREATE POLICY "Students delete own resume files"
+        ON storage.objects
+        FOR DELETE
+        TO authenticated
+        USING (
+            bucket_id = 'resumes' AND
+            (storage.foldername(name))[1] = auth.uid()::text
+        );
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+END $$;
+
+

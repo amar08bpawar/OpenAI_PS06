@@ -220,9 +220,11 @@ runTest("Database Schema: Resumes table has RLS, student ownership and private s
   assert.ok(sql.includes("CREATE POLICY \"Students update own resumes\""), "Must restrict updates to student owner");
   assert.ok(sql.includes("CREATE POLICY \"Students delete own resumes\""), "Must restrict deletion to student owner");
 
-  // Private storage bucket
+  // Private storage bucket & RLS policies
   assert.ok(sql.includes("'resumes'"), "Must configure resumes storage bucket");
   assert.ok(sql.includes("false"), "Bucket must be private (public: false)");
+  assert.ok(sql.includes("CREATE POLICY \"Students upload own resume files\""), "Must restrict storage upload to owner folder");
+  assert.ok(sql.includes("CREATE POLICY \"Students read own resume files\""), "Must restrict storage read to owner/admin");
 });
 
 // -----------------------------------------------------------------------------
