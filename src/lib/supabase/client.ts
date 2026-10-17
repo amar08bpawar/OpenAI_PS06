@@ -1,9 +1,21 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 
+let browserClient: ReturnType<typeof createBrowserClient> | null = null;
+
 export function createClient() {
+  if (typeof window !== "undefined" && browserClient) {
+    return browserClient;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co";
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  const client = createBrowserClient(supabaseUrl, supabaseAnonKey);
+
+  if (typeof window !== "undefined") {
+    browserClient = client;
+  }
+
+  return client;
 }

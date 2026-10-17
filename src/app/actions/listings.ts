@@ -326,8 +326,20 @@ export async function createCompanyAction(formData: {
     return { success: false, error: error.message };
   }
 
+  // Link recruiter membership to the newly registered company
+  if (data?.id) {
+    await supabase
+      .from("recruiter_memberships")
+      .update({
+        company_id: data.id,
+        company_name: formData.name,
+      })
+      .eq("user_id", user.id);
+  }
+
   revalidatePath("/companies");
   revalidatePath("/recruiter/company");
+  revalidatePath("/recruiter");
 
   return { success: true, company: data };
 }

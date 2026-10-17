@@ -133,9 +133,14 @@ export async function updateApplicationStatus(params: {
     }
   }
 
-  // 3. State transition rule check
+  // 3. Idempotent check: if status is already the target status, succeed without error
+  if (currentStatus === params.newStatus) {
+    return { success: true };
+  }
+
+  // State transition rule check
   const allowedNext = VALID_TRANSITIONS[currentStatus];
-  if (!allowedNext.includes(params.newStatus)) {
+  if (!allowedNext || !allowedNext.includes(params.newStatus)) {
     return {
       success: false,
       error: `Invalid transition: Cannot change status from '${currentStatus}' to '${params.newStatus}'.`,
@@ -154,6 +159,7 @@ export async function updateApplicationStatus(params: {
 
   revalidatePath("/dashboard/applications");
   revalidatePath("/recruiter/jobs");
+  revalidatePath("/recruiter");
 
   return { success: true };
 }

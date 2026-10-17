@@ -25,15 +25,18 @@ export async function saveStudentGitHubEvidenceAction(evidence: GitHubEvidenceRe
 
   const { error } = await supabase
     .from("student_github_evidence")
-    .upsert({
-      student_id: user.id,
-      username: evidence.username,
-      public_repos_count: evidence.public_repos_count,
-      total_stars: evidence.total_stars,
-      languages: evidence.languages as any,
-      top_repos: evidence.top_repos as any,
-      last_fetched_at: new Date().toISOString(),
-    });
+    .upsert(
+      {
+        student_id: user.id,
+        username: evidence.username,
+        public_repos_count: evidence.public_repos_count,
+        total_stars: evidence.total_stars,
+        languages: evidence.languages as any,
+        top_repos: evidence.top_repos as any,
+        last_fetched_at: new Date().toISOString(),
+      },
+      { onConflict: "student_id" }
+    );
 
   if (error) {
     return { success: false, error: error.message };

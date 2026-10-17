@@ -33,6 +33,41 @@ export const registerSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
+export const recruiterRegisterSchema = z
+  .object({
+    fullName: z
+      .string()
+      .min(2, "Full name must be at least 2 characters")
+      .max(100, "Full name must be less than 100 characters"),
+    email: z
+      .string()
+      .email("Please enter a valid work email address")
+      .toLowerCase()
+      .trim(),
+    companyName: z
+      .string()
+      .min(2, "Company / Organization name must be at least 2 characters")
+      .max(100, "Company name must be less than 100 characters"),
+    designation: z
+      .string()
+      .min(2, "Designation / Role title is required (e.g., Campus Recruiter, Talent Lead)")
+      .max(100, "Designation must be less than 100 characters"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type RecruiterRegisterInput = z.infer<typeof recruiterRegisterSchema>;
+
 export const loginSchema = z.object({
   email: z
     .string()
