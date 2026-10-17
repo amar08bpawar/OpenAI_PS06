@@ -145,7 +145,20 @@ function VerifyOtpContent() {
       }
 
       if (error) {
-        setServerError(error.message);
+        if (
+          error.message.toLowerCase().includes("magic link") ||
+          error.message.toLowerCase().includes("error sending")
+        ) {
+          setServerError(
+            "SMTP Delivery Failed: Supabase could not dispatch the email via your Custom SMTP server. Please verify your SMTP Host, Port, Username, Password, and Sender Email in Supabase Dashboard (Project Settings -> Authentication -> SMTP Settings), or check Logs -> Auth Logs."
+          );
+        } else if (error.message.toLowerCase().includes("rate limit")) {
+          setServerError(
+            "Supabase email rate limit exceeded (maximum 30 emails/hour). Please wait a few minutes, or confirm your user account directly in Supabase Dashboard (Authentication -> Users -> Confirm Email)."
+          );
+        } else {
+          setServerError(error.message);
+        }
       } else {
         setSuccessMessage("A fresh 6-digit verification code has been dispatched to your email.");
         setCanResend(false);

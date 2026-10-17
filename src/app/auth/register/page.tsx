@@ -95,9 +95,12 @@ export default function RegisterPage() {
     },
   });
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const onStudentSubmit = async (values: RegisterInput) => {
     setIsLoading(true);
     setServerError(null);
+    setSuccessMessage(null);
 
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
@@ -116,7 +119,13 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        setServerError(error.message);
+        if (error.message.toLowerCase().includes("rate limit")) {
+          setServerError(
+            "Supabase email rate limit exceeded. To test locally without email delays, disable 'Confirm email' in Supabase Dashboard (Authentication -> Providers -> Email)."
+          );
+        } else {
+          setServerError(error.message);
+        }
         setIsLoading(false);
         return;
       }
@@ -126,7 +135,22 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push(`/auth/verify-otp?email=${encodeURIComponent(values.email)}&type=signup`);
+      // Attempt immediate password sign-in (works when email confirmation is disabled or auto-confirmed)
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (signInData?.session) {
+        router.push("/dashboard");
+        return;
+      }
+
+      // If session is pending confirmation, avoid routing to OTP page and redirect to login
+      setSuccessMessage("Account created successfully! Redirecting to sign in with your password...");
+      setTimeout(() => {
+        router.push(`/auth/login?registered=true&email=${encodeURIComponent(values.email)}`);
+      }, 1200);
     } catch (err: any) {
       setServerError(err?.message || "An unexpected error occurred during registration.");
       setIsLoading(false);
@@ -136,6 +160,7 @@ export default function RegisterPage() {
   const onRecruiterSubmit = async (values: RecruiterRegisterInput) => {
     setIsLoading(true);
     setServerError(null);
+    setSuccessMessage(null);
 
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
@@ -147,8 +172,6 @@ export default function RegisterPage() {
             full_name: values.fullName,
             company_name: values.companyName,
             designation: values.designation,
-            // Database trigger handle_new_user() will strictly enforce role='student' initially.
-            // Recruiter role requires institutional administrator activation.
             role: "recruiter",
           },
           emailRedirectTo: `${siteUrl}/auth/callback?next=/recruiter`,
@@ -156,12 +179,17 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        setServerError(error.message);
+        if (error.message.toLowerCase().includes("rate limit")) {
+          setServerError(
+            "Supabase email rate limit exceeded. To test locally without email delays, disable 'Confirm email' in Supabase Dashboard (Authentication -> Providers -> Email)."
+          );
+        } else {
+          setServerError(error.message);
+        }
         setIsLoading(false);
         return;
       }
 
-      // If session is active immediately (e.g. dev mode without email confirmation)
       if (data.session) {
         await recordRecruiterSignupAction({
           companyName: values.companyName,
@@ -171,9 +199,25 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push(
-        `/auth/verify-otp?email=${encodeURIComponent(values.email)}&type=signup&role=recruiter`
-      );
+      // Attempt immediate password sign-in
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (signInData?.session) {
+        await recordRecruiterSignupAction({
+          companyName: values.companyName,
+          designation: values.designation,
+        });
+        router.push("/recruiter");
+        return;
+      }
+
+      setSuccessMessage("Hiring partner registration created! Redirecting to sign in with your password...");
+      setTimeout(() => {
+        router.push(`/auth/login?registered=true&email=${encodeURIComponent(values.email)}`);
+      }, 1200);
     } catch (err: any) {
       setServerError(err?.message || "An unexpected error occurred during registration.");
       setIsLoading(false);
@@ -244,6 +288,13 @@ export default function RegisterPage() {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
+
+            {successMessage && (
+              <Alert variant="success">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
 
@@ -417,6 +468,13 @@ export default function RegisterPage() {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
+
+            {successMessage && (
+              <Alert variant="success">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
 

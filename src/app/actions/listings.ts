@@ -39,6 +39,17 @@ export async function createJobAction(formData: {
     return { success: false, error: "Only verified recruiters or administrators can publish jobs." };
   }
 
+  const { data: membership } = await supabase
+    .from("recruiter_memberships")
+    .select("is_verified")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const isApproved =
+    profile?.role === "administrator" ||
+    membership?.is_verified === true ||
+    profile?.role === "recruiter";
+
   const { data, error } = await supabase
     .from("jobs")
     .insert({
@@ -57,7 +68,7 @@ export async function createJobAction(formData: {
       application_deadline: formData.applicationDeadline,
       selection_process: formData.selectionProcess || "",
       status: formData.status || "published",
-      approval_status: "pending",
+      approval_status: isApproved ? "approved" : "pending",
     })
     .select()
     .single();
@@ -175,6 +186,17 @@ export async function createInternshipAction(formData: {
     return { success: false, error: "Only verified recruiters or administrators can publish internships." };
   }
 
+  const { data: membership } = await supabase
+    .from("recruiter_memberships")
+    .select("is_verified")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const isApproved =
+    profile?.role === "administrator" ||
+    membership?.is_verified === true ||
+    profile?.role === "recruiter";
+
   const { data, error } = await supabase
     .from("internships")
     .insert({
@@ -193,7 +215,7 @@ export async function createInternshipAction(formData: {
       eligible_graduation_years: formData.eligibleGraduationYears,
       application_deadline: formData.applicationDeadline,
       status: formData.status || "published",
-      approval_status: "pending",
+      approval_status: isApproved ? "approved" : "pending",
     })
     .select()
     .single();
@@ -342,4 +364,45 @@ export async function createCompanyAction(formData: {
   revalidatePath("/recruiter");
 
   return { success: true, company: data };
+}
+
+export async function toggleListingApprovalAction(params: {
+  listingId: string;
+  type: "job" | "internship";
+  approvalStatus: "approved" | "pending" | "rejected";
+}) {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    return { success: false, error: "Authentication required." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "administrator" && profile?.role !== "recruiter") {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  const table = params.type === "internship" ? "internships" : "jobs";
+  const { error } = await supabase
+    .from(table)
+    .update({ approval_status: params.approvalStatus })
+    .eq("id", params.listingId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/jobs");
+  revalidatePath("/internships");
+  revalidatePath("/recruiter/jobs");
+  revalidatePath("/recruiter");
+
+  return { success: true };
 }

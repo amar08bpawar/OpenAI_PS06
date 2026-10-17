@@ -17,12 +17,38 @@ import {
   Globe,
   FileCheck,
   ExternalLink,
+  Award,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/state-views";
 import type { Profile, Company } from "@/types/database";
+function parseSalaryToINR(pkg: string | null | undefined): number | null {
+  if (!pkg) return null;
+  const clean = pkg.toLowerCase().replace(/,/g, "").trim();
+  const lpaMatch = clean.match(/([\d.]+)\s*(?:-|to)?\s*([\d.]*)\s*(?:lpa|lakh|lac)/);
+  if (lpaMatch) {
+    const val1 = parseFloat(lpaMatch[1]);
+    const val2 = lpaMatch[2] ? parseFloat(lpaMatch[2]) : val1;
+    return ((val1 + val2) / 2) * 100000;
+  }
+  const numMatch = clean.match(/\d[\d.]*/);
+  if (numMatch) {
+    const val = parseFloat(numMatch[0]);
+    if (val > 0 && val < 100) return val * 100000;
+    if (val >= 100) return val;
+  }
+  return null;
+}
+
+function formatSalaryINR(amount: number): string {
+  if (amount === 0) return "—";
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(1)} LPA`;
+  }
+  return `₹${amount.toLocaleString("en-IN")}`;
+}
 
 export default async function RecruiterDashboardPage() {
   const supabase = await createClient();
@@ -128,7 +154,30 @@ export default async function RecruiterDashboardPage() {
     ).length;
   }
 
+  const pendingApprovalsCount =
+    jobs.filter((j) => j.approval_status === "pending").length +
+    internships.filter((i) => i.approval_status === "pending").length;
+
+  const awaitingReviewCount = applications.filter(
+    (a) => a.status === "Applied" || a.status === "Under Review"
+  ).length;
+
+  const rejectedCount = applications.filter(
+    (a) => a.status === "Rejected"
+  ).length;
+
+  const salaryNumbers = jobs
+    .map((j) => parseSalaryToINR(j.salary_package))
+    .filter((n): n is number => n !== null);
+
+  const totalSalaryOffered = salaryNumbers.reduce((a, b) => a + b, 0);
+  const avgSalaryOffered =
+    salaryNumbers.length > 0 ? Math.round(totalSalaryOffered / salaryNumbers.length) : 0;
+
   const recentApplications = applications.slice(0, 5);
+  const recentJobs = [...jobs, ...internships]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5);
 
   return (
     <div className="container max-w-6xl mx-auto py-8 px-4 sm:px-6 space-y-8">
@@ -172,6 +221,9 @@ export default async function RecruiterDashboardPage() {
             <Button variant="outline" size="sm" asChild className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20">
               <Link href="/recruiter/jobs">Manage Listings</Link>
             </Button>
+            <Button variant="outline" size="sm" asChild className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20">
+              <Link href="/recruiter/analytics">Salary Analytics</Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -194,61 +246,98 @@ export default async function RecruiterDashboardPage() {
         </Card>
       )}
 
-      {/* Metrics Grid */}
+      {/* Primary Metrics Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Active Jobs */}
+        {/* Total & Active Jobs */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Active Full-Time Jobs
+              Total Jobs Posted
             </CardTitle>
             <Briefcase className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-extrabold text-foreground">{activeJobsCount}</div>
+            <div className="text-3xl font-extrabold text-foreground">{jobs.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {jobs.length} total job {jobs.length === 1 ? "posting" : "postings"}
+              <strong className="text-foreground">{activeJobsCount}</strong> active {activeJobsCount === 1 ? "vacancy" : "vacancies"}
             </p>
           </CardContent>
         </Card>
 
-        {/* Active Internships */}
+        {/* Active Vacancies (Jobs + Internships) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Active Internships
+              Active Vacancies
             </CardTitle>
             <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-extrabold text-foreground">{activeInternshipsCount}</div>
+            <div className="text-3xl font-extrabold text-foreground">{activeJobsCount + activeInternshipsCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {internships.length} total internship {internships.length === 1 ? "listing" : "listings"}
+              {totalListings} total opportunities published
             </p>
           </CardContent>
         </Card>
 
-        {/* Total Applications */}
+        {/* Pending Approvals */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Applications Received
+              Pending Job Approvals
+            </CardTitle>
+            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-3xl font-extrabold ${pendingApprovalsCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>
+              {pendingApprovalsCount}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {pendingApprovalsCount === 0 ? "All listings approved" : "Awaiting administrator review"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Total Applications Received */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Total Applications
             </CardTitle>
             <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-extrabold text-foreground">{applications.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across all posted opportunities
+              Across all campus drives
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary Metrics: Pipeline & Salary Compensation */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Applications Awaiting Review */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Awaiting Review
+            </CardTitle>
+            <Clock className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold text-orange-500">{awaitingReviewCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Pending recruiter screening
             </p>
           </CardContent>
         </Card>
 
-        {/* Shortlisted / In Review */}
+        {/* Shortlisted / Interview Candidates */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Shortlisted / In Progress
+              Shortlisted Candidates
             </CardTitle>
             <FileCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </CardHeader>
@@ -257,7 +346,43 @@ export default async function RecruiterDashboardPage() {
               {shortlistedCount}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Candidates advanced in pipeline
+              Advanced in interview pipeline
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Rejected Applications */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Rejected Applications
+            </CardTitle>
+            <ShieldAlert className="h-4 w-4 text-rose-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold text-muted-foreground">
+              {rejectedCount}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ineligible or archived
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Average Salary Offered */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Avg. Salary Package
+            </CardTitle>
+            <Award className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+              {formatSalaryINR(avgSalaryOffered)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {salaryNumbers.length > 0 ? `Total: ${formatSalaryINR(totalSalaryOffered)} offered` : "No salary data recorded"}
             </p>
           </CardContent>
         </Card>
@@ -362,38 +487,104 @@ export default async function RecruiterDashboardPage() {
             </Link>
 
             <Link
-              href="/companies"
+              href="/recruiter/applications"
               className="group p-4 rounded-xl border border-border bg-card/60 hover:bg-accent/50 hover:border-primary/40 transition-all space-y-1.5"
             >
               <div className="flex items-center justify-between">
                 <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <Building2 className="h-4 w-4" />
+                  <Users className="h-4 w-4" />
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
               </div>
-              <p className="font-semibold text-sm text-foreground">Campus Company Directory</p>
+              <p className="font-semibold text-sm text-foreground">Review All Applications</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Browse verified campus partners, competitive industry benchmarks, and hiring trends.
+                Filter applicants by status, check academic eligibility, and manage recruitment stages.
               </p>
             </Link>
 
             <Link
-              href="/jobs"
+              href="/recruiter/analytics"
               className="group p-4 rounded-xl border border-border bg-card/60 hover:bg-accent/50 hover:border-primary/40 transition-all space-y-1.5"
             >
               <div className="flex items-center justify-between">
                 <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center">
-                  <Users className="h-4 w-4" />
+                  <Clock className="h-4 w-4" />
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
               </div>
-              <p className="font-semibold text-sm text-foreground">Live Candidate View</p>
+              <p className="font-semibold text-sm text-foreground">Salary & Hiring Analytics</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Preview how your job listings and eligibility requirements appear to student applicants.
+                Analyze compensation trends, recruitment funnel drop-offs, and hiring yield metrics.
               </p>
             </Link>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Recent Job Postings */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Recent Job & Vacancy Postings</h2>
+            <p className="text-xs text-muted-foreground">
+              Your organization&apos;s latest published opportunities and opening status
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" asChild className="text-xs">
+            <Link href="/recruiter/jobs" className="flex items-center space-x-1">
+              <span>Manage All Postings</span>
+              <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            </Link>
+          </Button>
+        </div>
+
+        {recentJobs.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="py-10 text-center space-y-3">
+              <Briefcase className="h-9 w-9 text-muted-foreground mx-auto opacity-50" />
+              <p className="text-sm font-semibold text-foreground">No openings posted yet</p>
+              <Button size="sm" asChild>
+                <Link href="/recruiter/jobs/new">Create Your First Vacancy</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <div className="divide-y divide-border">
+              {recentJobs.map((item: any) => (
+                <div
+                  key={item.id}
+                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-accent/40 transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-semibold text-sm text-foreground">{item.title}</span>
+                      <Badge variant="outline" className="text-[10px] py-0 capitalize">
+                        {item.status || "published"}
+                      </Badge>
+                      {item.approval_status === "approved" ? (
+                        <Badge variant="success" className="text-[10px] py-0">Approved</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] py-0 border-amber-500/30 text-amber-600 bg-amber-500/10">Pending Review</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {item.salary_package || item.stipend || "Competitive Compensation"} &bull; Posted on {new Date(item.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Button size="sm" variant="outline" asChild className="text-xs">
+                      <Link href={`/recruiter/jobs/${item.id}/applications${item.duration ? "?type=internship" : ""}`}>
+                        View Applicants
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Recent Applications Activity */}
@@ -406,8 +597,8 @@ export default async function RecruiterDashboardPage() {
             </p>
           </div>
           <Button variant="ghost" size="sm" asChild className="text-xs">
-            <Link href="/recruiter/jobs" className="flex items-center space-x-1">
-              <span>View All Listings</span>
+            <Link href="/recruiter/applications" className="flex items-center space-x-1">
+              <span>View All Applications</span>
               <ArrowRight className="h-3.5 w-3.5 ml-1" />
             </Link>
           </Button>

@@ -117,6 +117,24 @@ Where configured, the platform can analyze publicly available GitHub information
 
 Public GitHub activity is an indicator of visible work, not proof of professional proficiency. The application must not access private repositories without an explicitly authorized integration.
 
+### 9. Recruiter Portal, Live Vacancies & Salary Analytics (Phase 8)
+
+- **Dedicated Recruiter Navigation & Workspace (`/recruiter`):**
+  - Isolated recruiter navigation: Overview, Post Job, Manage Jobs, Applications, Shortlisted Candidates, Company Profile, Salary Analytics, and Settings (with zero student items).
+  - Real-time statistics: Total jobs posted, active vacancies, pending approvals, total applications received, awaiting review, shortlisted candidates, rejected applications, and average salary package.
+- **Interactive Candidate Management (`/recruiter/applications` & `/recruiter/shortlisted`):**
+  - End-to-end recruitment pipeline progression: `Applied` &rarr; `Shortlisted` &rarr; `Interview` &rarr; `Selected` / `Rejected`.
+  - Filter applicants by status, search by candidate name, email, or skill tags, and inspect academic profiles (CGPA, qualification, course, statement of interest).
+- **Salary & Pipeline Analytics (`/recruiter/analytics`):**
+  - Average package offered, median salary, min/max compensation ranges.
+  - Work mode distribution (`Remote`, `Hybrid`, `On-site`).
+  - Applicant yield per opening and 4-stage candidate recruitment funnel.
+- **Live Vacancy Discovery & External Job Integration (`/jobs`):**
+  - Tab toggle between **Campus Placement Drives** and **Live Off-Campus Tech Vacancies**.
+  - Provider abstraction with resilient fallback for early-career software roles (full-time & internships).
+- **Direct Password Authentication (Canceled Mandatory OTP):**
+  - Users register and sign in directly with email & password without being blocked by OTP dispatch, custom SMTP failures, or Supabase free-tier email rate limits.
+
 ---
 
 ## System Architecture
