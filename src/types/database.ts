@@ -275,6 +275,25 @@ export interface StudentGitHubEvidence {
   last_fetched_at: string;
 }
 
+export type SavedCourseStatus = "Saved" | "In Progress" | "Completed";
+
+export interface StudentSavedCourse {
+  id: string;
+  student_id: string;
+  course_id: string;
+  provider: string;
+  title: string;
+  partner_name?: string | null;
+  course_url: string;
+  image_url?: string | null;
+  category?: string | null;
+  difficulty?: string | null;
+  skills: string[];
+  status: SavedCourseStatus;
+  saved_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -360,6 +379,12 @@ export interface Database {
         Row: any;
         Insert: any;
         Update: any;
+        Relationships: [];
+      };
+      student_saved_courses: {
+        Row: StudentSavedCourse;
+        Insert: Partial<StudentSavedCourse>;
+        Update: Partial<StudentSavedCourse>;
         Relationships: [];
       };
     };

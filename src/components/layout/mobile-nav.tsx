@@ -17,6 +17,7 @@ import {
   Bot,
   Compass,
   Code2,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,11 @@ const navigationItems = [
     name: "My Applications",
     href: "/dashboard/applications",
     icon: FileCheck,
+  },
+  {
+    name: "Skill Development",
+    href: "/dashboard/skills",
+    icon: BookOpen,
   },
   {
     name: "Aptitude Tests",

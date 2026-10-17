@@ -1069,3 +1069,66 @@ WITH CHECK (
         OR is_verified = FALSE
     )
 );
+
+-- ==============================================================================
+-- Phase 9: Student Saved Courses & Skill Development Tracking
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.student_saved_courses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    course_id TEXT NOT NULL,
+    provider TEXT NOT NULL DEFAULT 'coursera',
+    title TEXT NOT NULL,
+    partner_name TEXT,
+    course_url TEXT NOT NULL,
+    image_url TEXT,
+    category TEXT,
+    difficulty TEXT,
+    skills TEXT[] DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'Saved' CHECK (status IN ('Saved', 'In Progress', 'Completed')),
+    saved_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    CONSTRAINT uq_student_saved_course UNIQUE (student_id, provider, course_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_saved_courses_student_id ON public.student_saved_courses(student_id);
+CREATE INDEX IF NOT EXISTS idx_student_saved_courses_status ON public.student_saved_courses(status);
+
+DROP TRIGGER IF EXISTS set_student_saved_courses_updated_at ON public.student_saved_courses;
+CREATE TRIGGER set_student_saved_courses_updated_at
+    BEFORE UPDATE ON public.student_saved_courses
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+ALTER TABLE public.student_saved_courses ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Students view own saved courses" ON public.student_saved_courses;
+CREATE POLICY "Students view own saved courses"
+    ON public.student_saved_courses
+    FOR SELECT
+    TO authenticated
+    USING (student_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "Students insert own saved courses" ON public.student_saved_courses;
+CREATE POLICY "Students insert own saved courses"
+    ON public.student_saved_courses
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (student_id = auth.uid());
+
+DROP POLICY IF EXISTS "Students update own saved courses" ON public.student_saved_courses;
+CREATE POLICY "Students update own saved courses"
+    ON public.student_saved_courses
+    FOR UPDATE
+    TO authenticated
+    USING (student_id = auth.uid() OR public.is_admin())
+    WITH CHECK (student_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "Students delete own saved courses" ON public.student_saved_courses;
+CREATE POLICY "Students delete own saved courses"
+    ON public.student_saved_courses
+    FOR DELETE
+    TO authenticated
+    USING (student_id = auth.uid() OR public.is_admin());
+
