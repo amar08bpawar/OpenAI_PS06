@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "Placement Hub — AI-Powered Campus Recruitment & Verification Platform",
   description:
     "Next-generation campus placement platform connecting students and recruiters through verified skill signals, OTP authentication, and transparent role-based access.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

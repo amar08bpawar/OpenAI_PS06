@@ -135,6 +135,25 @@ Public GitHub activity is an indicator of visible work, not proof of professiona
 - **Direct Password Authentication (Canceled Mandatory OTP):**
   - Users register and sign in directly with email & password without being blocked by OTP dispatch, custom SMTP failures, or Supabase free-tier email rate limits.
 
+### 10. Coursera Skill Development Hub & Progress Tracking (Phase 9)
+
+- **Official Coursera Developer Integration Research:**
+  - Evaluated official Coursera REST APIs (`dev.coursera.com/apis`). Enterprise/Campus/Partner account access with SAML SSO, Client ID, Client Secret, and Organization ID is required for live OAuth2 bearer tokens.
+  - Transparent status reporting: When credentials (`COURSERA_CLIENT_ID`, `COURSERA_CLIENT_SECRET`, `COURSERA_ORG_ID`) are absent, Placement Hub does not fail or hallucinate; it clearly displays configuration instructions and serves a verified catalog of top courses with direct links to coursera.org.
+- **Dedicated Student Skill Hub (`/dashboard/skills`):**
+  - Search courses by title, keywords, skills (e.g., Python, React, AWS, Generative AI), and partner institutions.
+  - Multi-category filtering: AI & Machine Learning, Web Development, Data Science, Cloud Computing, Cybersecurity, Programming Languages, Communication & Soft Skills, and Technical Interview Prep.
+  - Difficulty filters: Beginner, Intermediate, and Advanced.
+  - Verified course cards with direct links to coursera.org, estimated duration, partner badges (Stanford, DeepLearning.AI, Google, Meta, IBM, AWS), and skill tags.
+- **Student Learning Progress & Saved Courses:**
+  - Save courses to a personal learning tracker with self-reported milestone status (`Saved`, `In Progress`, `Completed`).
+  - Additive database schema: `student_saved_courses` table with Row Level Security (RLS) guaranteeing students only access and update their own learning records.
+  - Authenticated server actions: `saveCourseAction`, `removeSavedCourseAction`, `updateSavedCourseStatusAction`, and `getSavedCoursesAction`.
+- **Personalized Course Recommendations:**
+  - Tailored recommendations dynamically mapped against the student's declared skills and academic degree.
+- **Placement Hub Favicon & Branding:**
+  - Custom graduation cap and placement signal vector icon (`src/app/icon.svg`) matching brand primary blue (`#2563eb`), registered in App Router root metadata.
+
 ---
 
 ## System Architecture
@@ -292,6 +311,9 @@ The application may require the following variables, depending on which features
 | `SUPABASE_SERVICE_ROLE_KEY` | Privileged server-side Supabase access, if required | Secret |
 | `OPENAI_API_KEY` | OpenAI API access | Secret |
 | `GITHUB_TOKEN` | Optional GitHub API authentication, if implemented | Secret |
+| `COURSERA_CLIENT_ID` | Coursera Enterprise / Campus Partner OAuth Client ID | Secret |
+| `COURSERA_CLIENT_SECRET` | Coursera Enterprise / Campus Partner OAuth Client Secret | Secret |
+| `COURSERA_ORG_ID` | Optional Coursera Organization ID for enterprise suites | Secret |
 
 **Important:**
 

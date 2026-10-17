@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Briefcase,
   Sparkles,
+  BookOpen,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,12 +49,19 @@ export default async function DashboardPage() {
 
   // Count active applications
   let applicationsCount = 0;
+  let savedCoursesCount = 0;
   if (user) {
-    const { count } = await supabase
+    const { count: appCount } = await supabase
       .from("applications")
       .select("*", { count: "exact", head: true })
       .eq("student_id", user.id);
-    applicationsCount = count || 0;
+    applicationsCount = appCount || 0;
+
+    const { count: courseCount } = await supabase
+      .from("student_saved_courses")
+      .select("*", { count: "exact", head: true })
+      .eq("student_id", user.id);
+    savedCoursesCount = courseCount || 0;
   }
 
   const fullName = profile?.full_name || (user?.user_metadata?.full_name as string) || "Student";
@@ -230,6 +238,37 @@ export default async function DashboardPage() {
           </Button>
         </Card>
       </div>
+
+      {/* Phase 9 Coursera Skill Development Hub Card */}
+      <Card className="border-border/80 overflow-hidden bg-gradient-to-br from-blue-900/10 via-card to-indigo-900/10">
+        <div className="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start space-x-3.5">
+            <div className="p-3 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 shrink-0">
+              <BookOpen className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <h3 className="font-bold text-base text-foreground">Coursera Skill Development Hub</h3>
+                <Badge variant="outline" className="text-[10px] text-blue-600 border-blue-500/30">Phase 9</Badge>
+                {savedCoursesCount > 0 && (
+                  <Badge variant="secondary" className="text-[10px] bg-emerald-500/15 text-emerald-600">
+                    {savedCoursesCount} Course{savedCoursesCount > 1 ? "s" : ""} Tracked
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground max-w-2xl">
+                Master industry-standard skills with university-backed certifications from Stanford, DeepLearning.AI, Google, Meta, IBM, and AWS. Track your self-reported learning milestones.
+              </p>
+            </div>
+          </div>
+          <Button asChild size="sm" className="shrink-0 text-xs">
+            <Link href="/dashboard/skills" className="flex items-center">
+              <span>Explore Skill Hub</span>
+              <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+            </Link>
+          </Button>
+        </div>
+      </Card>
 
       {/* Phase 3 AI & Skill Development Tools */}
       <div>

@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "next lint",
-    "test": "node tests/auth-validation.test.mjs && node tests/placement-system.test.mjs && node tests/phase3-ai-skills.test.mjs && node tests/resume-builder.test.mjs && node tests/security-qa-audit.test.mjs && node tests/phase8-recruiter-portal.test.mjs"
+    "test": "node tests/auth-validation.test.mjs && node tests/placement-system.test.mjs && node tests/phase3-ai-skills.test.mjs && node tests/resume-builder.test.mjs && node tests/security-qa-audit.test.mjs && node tests/phase8-recruiter-portal.test.mjs && node tests/phase9-coursera-skills.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
