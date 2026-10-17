@@ -19,8 +19,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/state-views";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 
 export default async function RecruiterJobsPage() {
   const supabase = await createClient();
@@ -40,21 +38,17 @@ export default async function RecruiterJobsPage() {
 
   if (profile?.role !== "recruiter" && profile?.role !== "administrator") {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 container max-w-2xl mx-auto py-16 text-center space-y-4">
-          <div className="mx-auto h-12 w-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center">
-            <AlertCircle className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-bold">Recruiter Access Required</h1>
-          <p className="text-sm text-muted-foreground">
-            Your current account has the &apos;student&apos; role. Job and candidate management requires an authorized recruiter or administrator account.
-          </p>
-          <Button asChild>
-            <Link href="/dashboard">Return to Student Dashboard</Link>
-          </Button>
-        </main>
-        <Footer />
+      <div className="container max-w-2xl mx-auto py-16 text-center space-y-4">
+        <div className="mx-auto h-12 w-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center">
+          <AlertCircle className="h-6 w-6" />
+        </div>
+        <h1 className="text-2xl font-bold">Recruiter Access Required</h1>
+        <p className="text-sm text-muted-foreground">
+          Your current account has the &apos;student&apos; role. Job and candidate management requires an authorized recruiter or administrator account.
+        </p>
+        <Button asChild>
+          <Link href="/dashboard">Return to Student Dashboard</Link>
+        </Button>
       </div>
     );
   }
@@ -85,11 +79,8 @@ export default async function RecruiterJobsPage() {
   const internships = (internshipsData as any[]) || [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background selection:bg-primary/20">
-      <Navbar />
-
-      <main className="flex-1 py-10">
-        <div className="container max-w-5xl mx-auto space-y-8">
+    <div className="py-8 px-4 sm:px-6">
+      <div className="container max-w-5xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center space-x-1.5 text-xs text-primary font-semibold mb-1">
@@ -248,9 +239,6 @@ export default async function RecruiterJobsPage() {
             )}
           </div>
         </div>
-      </main>
-
-      <Footer />
     </div>
   );
 }

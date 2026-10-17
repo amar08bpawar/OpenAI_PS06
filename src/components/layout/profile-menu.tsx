@@ -90,9 +90,9 @@ export function ProfileMenu({ profile }: ProfileMenuProps) {
         </DropdownMenuItem>
         {(roleLabel === "recruiter" || roleLabel === "administrator") && (
           <DropdownMenuItem asChild>
-            <Link href="/recruiter/jobs" className="flex items-center cursor-pointer font-medium text-primary">
+            <Link href="/recruiter" className="flex items-center cursor-pointer font-medium text-primary">
               <Building2 className="mr-2 h-4 w-4 text-primary" />
-              <span>Recruiter Workspace</span>
+              <span>Recruiter Dashboard</span>
             </Link>
           </DropdownMenuItem>
         )}

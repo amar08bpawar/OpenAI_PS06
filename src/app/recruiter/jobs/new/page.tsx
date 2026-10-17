@@ -59,9 +59,10 @@ export default function NewOpportunityPage() {
     async function loadCompanies() {
       setIsLoadingCompanies(true);
       const { data } = await supabase.from("companies").select("*").order("name");
-      if (data && data.length > 0) {
-        setCompanies(data as Company[]);
-        setCompanyId(data[0].id);
+      const companyList = (data as unknown as Company[]) || [];
+      if (companyList.length > 0) {
+        setCompanies(companyList);
+        setCompanyId(companyList[0].id);
       }
       setIsLoadingCompanies(false);
     }

@@ -334,6 +334,54 @@ runAuditTest("Security Hardening: No unsafe dangerouslySetInnerHTML, zero creden
   assert.ok(gitignore.includes(".env*.local"), ".gitignore must block local credential files");
 });
 
+// -----------------------------------------------------------------------------
+// Test 10: Recruiter Functionality & Role-Based Authorization
+// -----------------------------------------------------------------------------
+runAuditTest("Recruiter Features: Registration schema, role-aware routing, layout authorization guard, and pending verification enforcement", () => {
+  // 1. Check recruiterRegisterSchema
+  const validationsPath = path.join(rootDir, "src/lib/validations/auth.ts");
+  const validations = fs.readFileSync(validationsPath, "utf-8");
+  assert.ok(validations.includes("recruiterRegisterSchema"), "recruiterRegisterSchema must be exported");
+  assert.ok(validations.includes("companyName"), "recruiter schema must validate companyName");
+  assert.ok(validations.includes("designation"), "recruiter schema must validate designation");
+
+  // 2. Check register page has both options
+  const registerPage = fs.readFileSync(path.join(rootDir, "src/app/auth/register/page.tsx"), "utf-8");
+  assert.ok(registerPage.includes("Hiring Partner Registration"), "Register page must offer recruiter registration");
+  assert.ok(registerPage.includes("Create Student Account"), "Register page must preserve student registration");
+  assert.ok(registerPage.includes("Institutional Verification Required"), "Register page must state pending verification policy");
+
+  // 3. Check auth actions
+  const authActionPath = path.join(rootDir, "src/app/actions/auth.ts");
+  assert.ok(fs.existsSync(authActionPath), "src/app/actions/auth.ts must exist");
+  const authActions = fs.readFileSync(authActionPath, "utf-8");
+  assert.ok(authActions.includes("getUserRoleAction"), "getUserRoleAction must be exported");
+  assert.ok(authActions.includes("recordRecruiterSignupAction"), "recordRecruiterSignupAction must be exported");
+  assert.ok(authActions.includes("is_verified: false"), "recordRecruiterSignupAction must force is_verified to false");
+
+  // 4. Check Recruiter Layout & Dashboard
+  const recruiterLayoutPath = path.join(rootDir, "src/app/recruiter/layout.tsx");
+  const recruiterDashboardPath = path.join(rootDir, "src/app/recruiter/page.tsx");
+  assert.ok(fs.existsSync(recruiterLayoutPath), "src/app/recruiter/layout.tsx must exist");
+  assert.ok(fs.existsSync(recruiterDashboardPath), "src/app/recruiter/page.tsx must exist");
+
+  const layoutContent = fs.readFileSync(recruiterLayoutPath, "utf-8");
+  assert.ok(
+    layoutContent.includes("isRecruiterOrAdmin"),
+    "Recruiter layout must guard against unauthorized roles"
+  );
+  assert.ok(
+    layoutContent.includes("Recruiter Authorization Required"),
+    "Recruiter layout must render access denial for students"
+  );
+
+  const dashboardContent = fs.readFileSync(recruiterDashboardPath, "utf-8");
+  assert.ok(dashboardContent.includes("activeJobsCount"), "Dashboard must calculate active jobs");
+  assert.ok(dashboardContent.includes("activeInternshipsCount"), "Dashboard must calculate active internships");
+  assert.ok(dashboardContent.includes("shortlistedCount"), "Dashboard must track shortlisted candidates");
+  assert.ok(dashboardContent.includes("Pending Institutional Verification"), "Dashboard must display pending verification notice");
+});
+
 console.log("\n------------------------------------------------------------------");
 console.log(` Summary: ${passed} Passed, ${failed} Failed`);
 console.log("==================================================================\n");
