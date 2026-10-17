@@ -18,12 +18,14 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { searchExternalJobs } from "@/lib/services/external-jobs";
 import type { Profile, StudentDetails } from "@/types/database";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   const user = authData?.user;
+  const recommendedJobs = await searchExternalJobs({ limit: 3 });
 
   let profile: Profile | null = null;
   let studentDetails: StudentDetails | null = null;
@@ -415,6 +417,61 @@ export default async function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Recommended Live Vacancies Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-foreground flex items-center space-x-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              <span>Recommended Live Tech Opportunities</span>
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Curated off-campus and placement opportunities matched to early-career developers
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" asChild className="text-xs">
+            <Link href="/jobs?tab=external" className="flex items-center space-x-1">
+              <span>View All Opportunities</span>
+              <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {recommendedJobs.slice(0, 3).map((job) => (
+            <Card key={job.id} className="hover:shadow-md transition-all border-border/80 flex flex-col justify-between">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-start justify-between gap-1">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-semibold text-primary">{job.company}</span>
+                    <CardTitle className="text-sm font-bold line-clamp-1">{job.title}</CardTitle>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] shrink-0">{job.workMode}</Badge>
+                </div>
+                {job.salary && (
+                  <p className="text-xs font-semibold text-foreground pt-1">{job.salary}</p>
+                )}
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-3">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  {job.description}
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {job.skills.slice(0, 3).map((s, idx) => (
+                    <Badge key={idx} variant="secondary" className="text-[9px] py-0 px-1.5">{s}</Badge>
+                  ))}
+                </div>
+                <Button size="sm" variant="outline" asChild className="w-full text-xs mt-1">
+                  <a href={job.url} target="_blank" rel="noopener noreferrer">
+                    Apply on Site →
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

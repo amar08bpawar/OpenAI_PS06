@@ -11,6 +11,8 @@ import {
   ArrowRight,
   LayoutDashboard,
   Clock,
+  Users,
+  CheckCircle2,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -185,82 +187,132 @@ export default async function RecruiterLayout({
               </div>
             </Link>
 
-            <nav className="hidden md:flex items-center space-x-1 text-sm font-medium">
+            <nav className="hidden lg:flex items-center space-x-1 text-xs xl:text-sm font-medium">
               <Link
                 href="/recruiter"
-                className="px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
+                className="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-
-              <Link
-                href="/recruiter/jobs"
-                className="px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
-              >
-                <Briefcase className="h-4 w-4" />
-                <span>Listings</span>
+                <span>Overview</span>
               </Link>
 
               <Link
                 href="/recruiter/jobs/new"
-                className="px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
+                className="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
               >
                 <Plus className="h-4 w-4" />
-                <span>Post Opening</span>
+                <span>Post Job</span>
+              </Link>
+
+              <Link
+                href="/recruiter/jobs"
+                className="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
+              >
+                <Briefcase className="h-4 w-4" />
+                <span>Manage Jobs</span>
+              </Link>
+
+              <Link
+                href="/recruiter/applications"
+                className="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
+              >
+                <Users className="h-4 w-4" />
+                <span>Applications</span>
+              </Link>
+
+              <Link
+                href="/recruiter/shortlisted"
+                className="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Shortlisted</span>
               </Link>
 
               <Link
                 href="/recruiter/company"
-                className="px-3 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
+                className="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
               >
                 <Building2 className="h-4 w-4" />
-                <span>Organization</span>
+                <span>Company</span>
+              </Link>
+
+              <Link
+                href="/recruiter/analytics"
+                className="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors flex items-center space-x-1.5"
+              >
+                <Clock className="h-4 w-4" />
+                <span>Analytics</span>
               </Link>
             </nav>
           </div>
 
           <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="hidden sm:inline-flex text-xs"
+            <Link
+              href="/recruiter/settings"
+              className="hidden sm:inline-flex text-xs text-muted-foreground hover:text-foreground font-medium px-2 py-1 rounded-md hover:bg-accent/60 transition-colors"
             >
-              <Link href="/jobs">Student View</Link>
-            </Button>
+              Settings
+            </Link>
 
             <ProfileMenu profile={profile} />
           </div>
         </div>
 
-        <div className="flex md:hidden overflow-x-auto border-t border-border/60 px-4 py-2 space-x-2 text-xs font-medium">
+        <div className="flex lg:hidden overflow-x-auto border-t border-border/60 px-4 py-2 space-x-2 text-xs font-medium scrollbar-none">
           <Link
             href="/recruiter"
             className="px-2.5 py-1 rounded-md bg-accent/60 text-foreground whitespace-nowrap"
           >
-            Dashboard
-          </Link>
-
-          <Link
-            href="/recruiter/jobs"
-            className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
-          >
-            Listings
+            Overview
           </Link>
 
           <Link
             href="/recruiter/jobs/new"
             className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
           >
-            Post Opening
+            Post Job
+          </Link>
+
+          <Link
+            href="/recruiter/jobs"
+            className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
+          >
+            Manage Jobs
+          </Link>
+
+          <Link
+            href="/recruiter/applications"
+            className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
+          >
+            Applications
+          </Link>
+
+          <Link
+            href="/recruiter/shortlisted"
+            className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
+          >
+            Shortlisted
           </Link>
 
           <Link
             href="/recruiter/company"
             className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
           >
-            Organization
+            Company
+          </Link>
+
+          <Link
+            href="/recruiter/analytics"
+            className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
+          >
+            Analytics
+          </Link>
+
+          <Link
+            href="/recruiter/settings"
+            className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground whitespace-nowrap"
+          >
+            Settings
           </Link>
         </div>
       </header>

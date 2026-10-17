@@ -12,8 +12,6 @@ import {
   CheckCircle2,
   Lock,
   Mail,
-  KeyRound,
-  ArrowRight,
 } from "lucide-react";
 
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
@@ -64,6 +62,8 @@ function LoginContent() {
   const explicitRedirect = getSafeRedirectPath(
     searchParams.get("redirect")
   );
+  const registeredParam = searchParams.get("registered");
+  const emailParam = searchParams.get("email") || "";
   const errorParam = searchParams.get("error");
 
   const [serverError, setServerError] = useState<string | null>(
@@ -71,7 +71,11 @@ function LoginContent() {
       ? "Your verification or reset link has expired. Please sign in or request a new one."
       : null
   );
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    registeredParam === "true"
+      ? "Registration complete! Sign in with your password below."
+      : null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(
     null
@@ -87,7 +91,7 @@ function LoginContent() {
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      email: emailParam,
       password: "",
     },
   });
@@ -111,7 +115,7 @@ function LoginContent() {
         ) {
           setUnconfirmedEmail(values.email);
           setServerError(
-            "Your email has not been verified yet. Please enter the OTP sent to your inbox."
+            "Account email is not confirmed. In Supabase Dashboard -> Authentication -> Providers -> Email, disable 'Confirm email' (or confirm your user under Authentication -> Users) to enable direct password sign in without OTP."
           );
         } else {
           setServerError(error.message);
@@ -145,48 +149,6 @@ function LoginContent() {
     }
   };
 
-  const handleRequestOtpLogin = async () => {
-    const email = getValues("email")?.trim();
-
-    if (!email) {
-      setServerError(
-        "Please enter your email above before requesting an OTP code."
-      );
-      return;
-    }
-
-    setIsLoading(true);
-    setServerError(null);
-    setUnconfirmedEmail(null);
-    setSuccessMessage(null);
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        },
-      });
-
-      if (error) {
-        setServerError(error.message);
-        return;
-      }
-
-      router.push(
-        `/auth/verify-otp?email=${encodeURIComponent(email)}&type=email`
-      );
-    } catch (err: unknown) {
-      setServerError(
-        err instanceof Error
-          ? err.message
-          : "Failed to send login OTP."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <Card className="border-border/80 shadow-md">
       <CardHeader className="space-y-1 text-center">
@@ -208,20 +170,8 @@ function LoginContent() {
           {serverError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="space-y-2">
+              <AlertDescription>
                 <p>{serverError}</p>
-
-                {unconfirmedEmail && (
-                  <Link
-                    href={`/auth/verify-otp?email=${encodeURIComponent(
-                      unconfirmedEmail
-                    )}&type=signup`}
-                    className="inline-flex items-center text-xs font-semibold underline underline-offset-4"
-                  >
-                    Click here to enter your email OTP now
-                    <ArrowRight className="ml-1 h-3 w-3" />
-                  </Link>
-                )}
               </AlertDescription>
             </Alert>
           )}
@@ -305,27 +255,6 @@ function LoginContent() {
             ) : (
               "Sign In with Password"
             )}
-          </Button>
-
-          <div className="relative w-full text-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-
-            <span className="relative bg-card px-2 text-xs uppercase text-muted-foreground">
-              Or passwordless
-            </span>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            disabled={isLoading}
-            onClick={handleRequestOtpLogin}
-          >
-            <KeyRound className="mr-2 h-4 w-4 text-primary" />
-            Sign In with Email OTP Code
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
